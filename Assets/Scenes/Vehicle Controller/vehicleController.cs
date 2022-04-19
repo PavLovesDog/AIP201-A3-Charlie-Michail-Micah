@@ -18,6 +18,7 @@ public class vehicleController : MonoBehaviour
     //Drift
     public Vector3 driftVector = Vector3.zero;
     public float driftAmount = 1.0f;
+    public float driftAngle = 90.0f;
     public float driftTime = 0.0f;
     public float timeTurning = 0.0f;
     
@@ -32,8 +33,17 @@ public class vehicleController : MonoBehaviour
     void Update()
     {
         // Track facing direction for vectors
-        driftVector = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad) * 0.75f, Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad) * 0.75f); 
+        driftVector = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f, Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f); 
         velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
+
+        
+        //testing SMALLER draw lines for visual aesthetics in debugging...
+        Vector3 velocityPerSecondTracker = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad) * 0.5f, Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad) * 0.5f);
+        velocityPerSecondTracker *= currentVelocityPerSecond;
+        Debug.DrawLine(transform.position, transform.position + velocityPerSecondTracker, Color.green);
+        //Vector3 TESTdriftVector = new Vector3(Mathf.Cos((currentDirectionDeg - 90.0f) * Mathf.Deg2Rad) * 0.5f, Mathf.Sin((currentDirectionDeg - 90.0f) * Mathf.Deg2Rad) * 0.5f);
+        //TESTdriftVector *= currentVelocityPerSecond;
+        //Debug.DrawLine(transform.position, transform.position + TESTdriftVector, Color.cyan);
 
         // assign bools
         turningLeft = Input.GetKey(KeyCode.A);
@@ -52,9 +62,22 @@ public class vehicleController : MonoBehaviour
         Vector3 Rotation = new Vector3(0.0f, 0.0f, currentDirectionDeg - 90.0f);
         transform.eulerAngles = Rotation;
 
+        //TODO TESTING
+        Vector3 dForceLeft = new Vector3(Mathf.Cos((currentDirectionDeg + driftAngle) * Mathf.Deg2Rad) * 0.5f, Mathf.Sin((currentDirectionDeg + driftAngle) * Mathf.Deg2Rad) * 0.5f);
+        dForceLeft *= (timeTurning * 5);
+        Debug.DrawLine(transform.position, transform.position + dForceLeft, Color.magenta);
+
+        //TODO THIS NEEDS TO HAPPEN REGARDLESS OF TURNING
+        Vector3 dForceRight = new Vector3(Mathf.Cos((currentDirectionDeg - driftAngle) * Mathf.Deg2Rad) * 0.5f, Mathf.Sin((currentDirectionDeg - driftAngle) * Mathf.Deg2Rad) * 0.5f);
+        dForceRight *= (timeTurning * 5); 
+        Debug.DrawLine(transform.position, transform.position + dForceRight, Color.magenta);
+
         if (turningLeft)
         {
-            if(isDeccelerating)
+            timeTurning += Time.deltaTime;
+            timeTurning = Mathf.Clamp(timeTurning, 0.0f, 1.5f); // clamp it
+
+            if (isDeccelerating)
             {
                 // allow turning no matter what
                 currentDirectionDeg += rotationSpeed * Time.deltaTime; 
@@ -136,12 +159,15 @@ public class vehicleController : MonoBehaviour
         }
         else if (!turningLeft && !turningRight)
         {
-            timeTurning = 0.0f; // reset for next turn!
+            timeTurning -= Time.deltaTime;
             driftTime = 0.0f;
         }
 
         if (turningRight)
         {
+            timeTurning += Time.deltaTime;
+            timeTurning = Mathf.Clamp(timeTurning, 0.0f, 1.5f); // clamp it
+
             if (isDeccelerating)
             {
                 // allow turning no matter what
@@ -210,7 +236,7 @@ public class vehicleController : MonoBehaviour
         }
         else if (!turningLeft && !turningRight)
         {
-            timeTurning = 0.0f;
+            timeTurning -= Time.deltaTime;
             driftTime = 0.0f;
         }
 
@@ -220,46 +246,21 @@ public class vehicleController : MonoBehaviour
 
         if (isAccelerating)
         {
-            // Speed up acceleration when reversing for faster take off
-            //AdjustForces(0.0f, 20.0f, 20.0f, 5.0f, 20.0f);
-
-            //if (currentVelocityPerSecond < 0.0f)
-            //{
-            //    acceleration = 20.0f;
-            //}
-            //else
-            //{
-            //    acceleration = 5.0f; //TODO this resets chosen velocity within editor! need to manage somehow
-            //}
-
+           
             // set speeds, for smooth changes between reverse to accelerate
             AdjustForces(7.5f, 15.0f, 20.0f, 5.0f, 20.0f);
-
-            //if (currentVelocityPerSecond < 7.5f)
-            //{
-            //    maxSpeed = 20.0f;
-            //    acceleration = 15.0f; // quick take offs
-            //}
-            //else
-            //{
-            //    maxSpeed = 20.0f;
-            //    acceleration = 5.0f;
-            //}
-
-
-
-
-            //Drift vector
-            driftVector *= currentVelocityPerSecond;
-            Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
 
             //apply acceleration to velocity
             currentVelocityPerSecond += acceleration * Time.deltaTime;
             currentVelocityPerSecond = Mathf.Clamp(currentVelocityPerSecond, -maxSpeed, maxSpeed);
             velocityPerSecond *= currentVelocityPerSecond;
-            Debug.DrawLine(transform.position, transform.position + velocityPerSecond, Color.green); // Draw facing direction
+            //Debug.DrawLine(transform.position, transform.position + velocityPerSecond, Color.green); // Draw facing direction
 
-            //TODO apply some steering behaviours!
+            //Drift vector
+            driftVector *= currentVelocityPerSecond;
+            Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
+
+            //TODO apply some steering behaviours?
 
 
             #region Rigidbody Movement
@@ -272,24 +273,16 @@ public class vehicleController : MonoBehaviour
         }
         else if (!isAccelerating && currentVelocityPerSecond > 0.5f) // if not holding GO & still rolling
         {
-
             // Apply Drag
             velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
             currentVelocityPerSecond = Mathf.Lerp(currentVelocityPerSecond, dragForce, Time.deltaTime); // lerp between current speed and drag force overtime
             velocityPerSecond *= currentVelocityPerSecond;
-
         }
         else if (isDeccelerating)
         {
             //adjust reversing values, can't reverse super quick
             AdjustForces(0.0f, 2.0f, 5.0f, 5.0f, 20.0f);
-           // if (currentVelocityPerSecond < 0.0f)
-           // {
-           //     //TODO !!!Changing editor values!!!!!
-           //     maxSpeed = 5.0f;
-           //     acceleration = 2.0f;
-           // }
-
+ 
             // Do opposite of acceleration for DEcceleration
             velocityPerSecond = new Vector3(-Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), -Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
             currentVelocityPerSecond -= acceleration * Time.deltaTime;
@@ -314,7 +307,6 @@ public class vehicleController : MonoBehaviour
         else
         {
             // Reset values
-            
             currentVelocityPerSecond = 0;
             velocityPerSecond = Vector3.zero;
         }
@@ -345,13 +337,16 @@ public class vehicleController : MonoBehaviour
         // Find perpendicular vector to current velocity travelling
         Vector3 driftForce = Vector2.Perpendicular(velocityPerSecond);
 
-        //Debug.DrawLine(transform.position, driftForce, Color.magenta);
+        ////TODO THIS NEEDS TO HAPPEN REGARDLESS OF TURNING
+        //Vector3 dForce = new Vector3(Mathf.Cos((currentDirectionDeg + driftAngle) * Mathf.Deg2Rad) * 0.5f, Mathf.Sin((currentDirectionDeg + driftAngle) * Mathf.Deg2Rad) * 0.5f);
+        //dForce *= (timeTurning * 5); //TODO this could times against another variable, only manipulated when left or right is pressed
+        //Debug.DrawLine(transform.position, transform.position + dForce, Color.magenta);
 
         // add it to drift vector
         if (pressedDrift && currentVelocityPerSecond > 0.0f)
         {
             driftTime += Time.deltaTime; // build up drag period
-            driftTime = Mathf.Clamp(driftTime, 0.0f, 0.5f); // clamp it
+            driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f); // clamp it
             driftVector += driftForce; // add drift force to our current drifting vector (rotation considered)
             transform.position -= driftVector * Time.deltaTime * driftAmount; // add to current vector negatively to push away from car
         }
@@ -395,13 +390,17 @@ public class vehicleController : MonoBehaviour
     {
         // create drift force
         Vector3 driftForce = Vector2.Perpendicular(-velocityPerSecond);
-        //Debug.DrawLine(transform.position, driftForce, Color.magenta);
+
+        ////TODO THIS NEEDS TO HAPPEN REGARDLESS OF TURNING
+        //Vector3 dForce = new Vector3(Mathf.Cos((currentDirectionDeg - driftAngle) * Mathf.Deg2Rad) * 0.5f, Mathf.Sin((currentDirectionDeg - driftAngle) * Mathf.Deg2Rad) * 0.5f);
+        //dForce *= (timeTurning * 5);
+        //Debug.DrawLine(transform.position, transform.position + dForce, Color.magenta);
 
         // add it to drift vector
         if (pressedDrift && currentVelocityPerSecond > 0.0f)
         {
             driftTime += Time.deltaTime;
-            driftTime = Mathf.Clamp(driftTime, 0.0f, 0.5f);
+            driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f);
             driftVector += driftForce;
             transform.position -= driftVector * Time.deltaTime * driftAmount;
         }
