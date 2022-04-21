@@ -32,6 +32,16 @@ public class vehicleController : MonoBehaviour
     bool turningRight;
     bool pressedDrift;
 
+    public int flowForce;
+    public FlowFieldManager ffM1;
+    public FlowFieldManager ffM2;
+    public FlowFieldManager ffM3;
+    public FlowFieldManager ffM4;
+    public FlowFieldManager ffM5;
+    public FlowFieldManager ffM6;
+    public FlowFieldManager ffM7;
+    public FlowFieldManager ffM8;
+
     // Update is called once per frame
     void Update()
     {
@@ -45,6 +55,7 @@ public class vehicleController : MonoBehaviour
         //testing SMALLER draw lines for visual aesthetics in debugging...
         Vector3 velocityPerSecondTracker = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad) * 0.5f, Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad) * 0.5f);
         velocityPerSecondTracker *= currentVelocityPerSecond;
+        velocityPerSecondTracker *= 0.5f;
         Debug.DrawLine(transform.position, transform.position + velocityPerSecondTracker, Color.green);
 
         // assign bools
@@ -58,7 +69,9 @@ public class vehicleController : MonoBehaviour
 
         // Attach turning rotation to speed, if going to slow, no turn
         float minSpeedForTurn = currentVelocityPerSecond / 8;
-        minSpeedForTurn = Mathf.Clamp01(minSpeedForTurn);
+        minSpeedForTurn = Mathf.Clamp01(minSpeedForTurn); // clamp betwee 0 & 1
+
+        //TODO move rotation based on physics, a force in the direction we wish to turn
 
         // attach rotation to vector for steering
         Vector3 Rotation = new Vector3(0.0f, 0.0f, currentDirectionDeg - 90.0f);
@@ -68,15 +81,15 @@ public class vehicleController : MonoBehaviour
         // LEFT TURNING =====================================================================================
         if (turningLeft)
         {
-            timeRightTurning = 0.0f; // Reset so right turn does NOT interfere
+            timeRightTurning -= Time.deltaTime * 2.0f; // Reset so right turn does NOT interfere
 
             // Left Turn Slide
-            timeLeftTurning += Time.deltaTime;
+            timeLeftTurning += Time.deltaTime * 2.0f;
             timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 1.5f); // clamp it
             slideForceLeft *= (timeLeftTurning * 5) * minSpeedForTurn;
-            Debug.DrawLine(transform.position, transform.position + slideForceLeft, Color.magenta); // DUBUG
+            velocityPerSecond -= slideForceLeft * Time.deltaTime * driftAmount; // add slide force to current force
 
-            transform.position -= slideForceLeft * Time.deltaTime * driftAmount;
+            Debug.DrawLine(transform.position, transform.position + slideForceLeft, Color.magenta); // DUBUG
 
             if (isDeccelerating)
             {
@@ -88,6 +101,15 @@ public class vehicleController : MonoBehaviour
                 currentDirectionDeg += rotationSpeed * Time.deltaTime * minSpeedForTurn;
             }
 
+            // drift left
+            if (pressedDrift && currentVelocityPerSecond > 0.0f)
+            {
+                // immediately increase slide vector force, to simulate kickout & slide
+                timeLeftTurning += Time.deltaTime * 5; // slideing timer
+                timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 2.0f); // clamp it
+                slideForceLeft *= (timeLeftTurning * 5) * minSpeedForTurn;
+            }
+
 
         }
         else if (!turningLeft && !turningRight && timeLeftTurning > 0.0f)
@@ -96,20 +118,21 @@ public class vehicleController : MonoBehaviour
             timeLeftTurning -= Time.deltaTime * 2; // multiply speed of release by 2
             timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 1.5f);
             slideForceLeft *= (timeLeftTurning * 5) * minSpeedForTurn;
-            transform.position -= slideForceLeft * Time.deltaTime * driftAmount;
+            velocityPerSecond -= slideForceLeft * Time.deltaTime * driftAmount;
             Debug.DrawLine(transform.position, transform.position + slideForceLeft, Color.magenta); // DEBUG
         }
 
         // RIGHT TURNING ======================================================================================
         if (turningRight)
         {
-            timeLeftTurning = 0.0f;
-            timeRightTurning += Time.deltaTime; // slideing timer
+            timeLeftTurning -= Time.deltaTime * 2.0f;
+
+            timeRightTurning += Time.deltaTime * 2; // slideing timer
             timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 1.5f); // clamp it
             slideForceRight *= (timeRightTurning * 5) * minSpeedForTurn; // Clamp slide force to velocity (Cant slide while NO velocity)
             Debug.DrawLine(transform.position, transform.position + slideForceRight, Color.magenta);
 
-            transform.position -= slideForceRight * Time.deltaTime * driftAmount; // add slide force to current transform
+            velocityPerSecond -= slideForceRight * Time.deltaTime * driftAmount; // add slide force to current force
 
             if (isDeccelerating)
             {
@@ -122,28 +145,25 @@ public class vehicleController : MonoBehaviour
                 currentDirectionDeg -= rotationSpeed * Time.deltaTime * minSpeedForTurn;
             }
 
+            // drift right
+            if (pressedDrift && currentVelocityPerSecond > 0.0f)
+            {
+                // immediately increse slide vector force, to simulate kickout & slide
+                timeRightTurning += Time.deltaTime * 5;
+                timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 2.0f); // clamp it
+                slideForceRight *= (timeRightTurning * 5) * minSpeedForTurn;
+            }
+
         }
         else if (!turningLeft && !turningRight && timeRightTurning > 0.0f)
         {
+            // Right slide release
             timeRightTurning -= Time.deltaTime * 2;
             timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 1.5f);
             slideForceRight *= (timeRightTurning * 5) * minSpeedForTurn;
-            transform.position -= slideForceRight * Time.deltaTime * driftAmount;
+            velocityPerSecond -= slideForceRight * Time.deltaTime * driftAmount;
             Debug.DrawLine(transform.position, transform.position + slideForceRight, Color.magenta);
         }
-
-        /* below functions do not function correctly with new slide vectors above */
-        #region Left Turn Drift
-
-        HandleDriftLeftTurn(pressedDrift);
-
-        #endregion
-
-        #region Right Turn Drift
-
-        HandleDriftRightTurn(pressedDrift);
-
-        #endregion
 
         #endregion
 
@@ -163,7 +183,7 @@ public class vehicleController : MonoBehaviour
 
             //Drift vector
             driftVector *= currentVelocityPerSecond;
-            Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
+            //Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
 
             #region Rigidbody Movement
             ////UNITY RIGIDBODY PHYSICS
@@ -182,6 +202,7 @@ public class vehicleController : MonoBehaviour
         }
         else if (isDeccelerating)
         {
+            //TODO Speed up slowdown
             //adjust reversing values, can't reverse super quick
             AdjustForces(0.0f, 2.0f, 5.0f, 5.0f, 20.0f);
  
@@ -216,6 +237,9 @@ public class vehicleController : MonoBehaviour
 
         #endregion
 
+        //GET Force force from Flow Field and apply it to Car respective of EACH flowfield
+        FlowBoundry();
+            
         // add rotation & accel vectors to move
         transform.position += velocityPerSecond * Time.deltaTime;
     }
@@ -235,74 +259,131 @@ public class vehicleController : MonoBehaviour
         }
     }
 
-    //TODO These Drift functions are now a bit broken with the added turning Slide
-    void HandleDriftLeftTurn(bool pressedDrift)
+    void FlowBoundry()
     {
-        // Find perpendicular vector to current velocity travelling
-        Vector3 driftForce = Vector2.Perpendicular(velocityPerSecond);
-
-        // add it to drift vector
-        if (pressedDrift && currentVelocityPerSecond > 0.0f)
+        if (transform.position.x > ffM1.gridStartX && transform.position.x < ffM1.width + ffM1.gridStartX && transform.position.y > ffM1.gridStartY && transform.position.y < ffM1.height + ffM1.gridStartY)
         {
-            /*Slide Vector addition attempt*/
-            //TODO Tried add small amount to slide vector
-            driftTime += Time.deltaTime; // build up drag period
-            driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f); // clamp it
-            slideForceLeft *= driftTime * driftAmount;
-            transform.position -= slideForceLeft * Time.deltaTime;
-
-            /*new drift Vector addition attempt*/
-            //TODO Tried adding new vector and add it, though slide & drift vectors both added to velocity is too much
-            //driftForce *= driftTime;// * (currentVelocityPerSecond / 8);
-            //driftVector += driftForce; // add drift force to our current drifting vector (rotation considered)
-            ////driftVector.x = Mathf.Clamp(driftVector.x, 0.0f, 5.0f);
-            //transform.position -= driftForce * Time.deltaTime;// * driftAmount; // add to current vector negatively to push away from car
+            Vector3 force = ffM1.GetForceForPosition(transform.position);
+            velocityPerSecond += force * flowForce;
         }
-        else if (!pressedDrift && driftTime > 0.0f) // if let go of 'drift' and still sliding
+
+        if (transform.position.x > ffM2.gridStartX && transform.position.x < ffM2.width + ffM2.gridStartX && transform.position.y > ffM2.gridStartY && transform.position.y < ffM2.height + ffM2.gridStartY)
         {
-            /*Slide Vector addition attempt*/
-            driftTime -= Time.deltaTime;
-            driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f); // clamp it
-            slideForceLeft *= driftTime * driftAmount;
-            transform.position -= slideForceLeft * Time.deltaTime;
-
-            /*new drift Vector addition attempt*/
-            //driftForce *= driftTime;// * (currentVelocityPerSecond / 8); 
-            //driftVector += driftForce; // add drift force to our current drifting vector (rotation considered)
-            //transform.position -= driftForce * Time.deltaTime;// * driftAmount;
-
+            Vector3 force = ffM2.GetForceForPosition(transform.position);
+            velocityPerSecond += force * flowForce;
         }
-        else
+
+        if (transform.position.x > ffM3.gridStartX && transform.position.x < ffM3.width + ffM3.gridStartX && transform.position.y > ffM3.gridStartY && transform.position.y < ffM3.height + ffM3.gridStartY)
         {
-            driftTime = 0.0f;
+            Vector3 force = ffM3.GetForceForPosition(transform.position);
+            velocityPerSecond += force * flowForce;
+        }
+
+        if (transform.position.x > ffM4.gridStartX && transform.position.x < ffM4.width + ffM4.gridStartX && transform.position.y > ffM4.gridStartY && transform.position.y < ffM4.height + ffM4.gridStartY)
+        {
+            Vector3 force = ffM4.GetForceForPosition(transform.position);
+            velocityPerSecond += force * flowForce;
+        }
+
+        if (transform.position.x > ffM5.gridStartX && transform.position.x < ffM5.width + ffM5.gridStartX && transform.position.y > ffM5.gridStartY && transform.position.y < ffM5.height + ffM5.gridStartY)
+        {
+            Vector3 force = ffM5.GetForceForPosition(transform.position);
+            velocityPerSecond += force * flowForce;
+        }
+
+        if (transform.position.x > ffM6.gridStartX && transform.position.x < ffM6.width + ffM6.gridStartX && transform.position.y > ffM6.gridStartY && transform.position.y < ffM6.height + ffM6.gridStartY)
+        {
+            Vector3 force = ffM6.GetForceForPosition(transform.position);
+            velocityPerSecond += force * flowForce;
+        }
+
+        if (transform.position.x > ffM7.gridStartX && transform.position.x < ffM7.width + ffM7.gridStartX && transform.position.y > ffM7.gridStartY && transform.position.y < ffM7.height + ffM7.gridStartY)
+        {
+            Vector3 force = ffM7.GetForceForPosition(transform.position);
+            velocityPerSecond += force * flowForce;
+        }
+
+        if (transform.position.x > ffM8.gridStartX && transform.position.x < ffM8.width + ffM8.gridStartX && transform.position.y > ffM8.gridStartY && transform.position.y < ffM8.height + ffM8.gridStartY)
+        {
+            Vector3 force = ffM8.GetForceForPosition(transform.position);
+            velocityPerSecond += force * flowForce;
         }
     }
 
-    void HandleDriftRightTurn(bool pressedDrift)
-    {
-        // create drift force
-        Vector3 driftForce = Vector2.Perpendicular(-velocityPerSecond);
+    #region Old Drift Functions
 
-        // add it to drift vector
-        if (pressedDrift && currentVelocityPerSecond > 0.0f)
-        {
-            driftTime += Time.deltaTime;
-            driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f);
-            driftVector += driftForce;
-            transform.position -= driftVector * Time.deltaTime * driftAmount;
-        }
-        else if (!pressedDrift && driftTime > 0.0f)
-        {
-            driftTime -= Time.deltaTime;
+    ////TODO These Drift functions are now a bit broken with the added turning Slide
+    //void HandleDriftLeftTurn(bool pressedDrift)
+    //{
+    //    //TODO Just make the other drift vector Max, for instant slide
+    //    // Find perpendicular vector to current velocity travelling
+    //    Vector3 driftForce = Vector2.Perpendicular(velocityPerSecond);
+    //
+    //    // add it to drift vector
+    //    if (pressedDrift && currentVelocityPerSecond > 0.0f)
+    //    {
+    //        /*Slide Vector addition attempt*/
+    //        //TODO Tried add small amount to slide vector
+    //        driftTime += Time.deltaTime; // build up drag period
+    //        driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f); // clamp it
+    //        slideForceLeft *= driftTime * driftAmount;
+    //        transform.position -= slideForceLeft * Time.deltaTime;
+    //
+    //        /*new drift Vector addition attempt*/
+    //        //TODO Tried adding new vector and add it, though slide & drift vectors both added to velocity is too much
+    //        //driftForce *= driftTime;// * (currentVelocityPerSecond / 8);
+    //        //driftVector += driftForce; // add drift force to our current drifting vector (rotation considered)
+    //        ////driftVector.x = Mathf.Clamp(driftVector.x, 0.0f, 5.0f);
+    //        //transform.position -= driftForce * Time.deltaTime;// * driftAmount; // add to current vector negatively to push away from car
+    //    }
+    //    else if (!pressedDrift && driftTime > 0.0f) // if let go of 'drift' and still sliding
+    //    {
+    //        /*Slide Vector addition attempt*/
+    //        driftTime -= Time.deltaTime;
+    //        driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f); // clamp it
+    //        slideForceLeft *= driftTime * driftAmount;
+    //        transform.position -= slideForceLeft * Time.deltaTime;
+    //
+    //        /*new drift Vector addition attempt*/
+    //        //driftForce *= driftTime;// * (currentVelocityPerSecond / 8); 
+    //        //driftVector += driftForce; // add drift force to our current drifting vector (rotation considered)
+    //        //transform.position -= driftForce * Time.deltaTime;// * driftAmount;
+    //
+    //    }
+    //    else
+    //    {
+    //        driftTime = 0.0f;
+    //    }
+    //}
+    //
+    //void HandleDriftRightTurn(bool pressedDrift)
+    //{
+    //    // create drift force
+    //    Vector3 driftForce = Vector2.Perpendicular(-velocityPerSecond);
+    //
+    //    // add it to drift vector
+    //    if (pressedDrift && currentVelocityPerSecond > 0.0f)
+    //    {
+    //        driftTime += Time.deltaTime;
+    //        driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f);
+    //        driftVector += driftForce;
+    //        transform.position -= driftVector * Time.deltaTime * driftAmount;
+    //    }
+    //    else if (!pressedDrift && driftTime > 0.0f)
+    //    {
+    //        driftTime -= Time.deltaTime;
+    //
+    //        //TODO Handle how transform is translated when drift is released... 
+    //        Vector3 driftDecay = -driftVector * Time.deltaTime * driftAmount;
+    //        transform.position += driftDecay;
+    //    }
+    //    else
+    //    {
+    //        driftTime -= Time.deltaTime;
+    //        driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f);
+    //    }
+    //}
 
-            //TODO Handle how transform is translated when drift is released... 
-            Vector3 driftDecay = -driftVector * Time.deltaTime * driftAmount;
-            transform.position += driftDecay;
-        }
-        else
-        {
-            driftTime -= Time.deltaTime;
-            driftTime = Mathf.Clamp(driftTime, 0.0f, 1.0f);
-        }
-    }
+    #endregion
+
 }
