@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using B83.Image.BMP;
 
 public class vehicleController : MonoBehaviour
 {
+ 
     //Forces
     public float maxSpeed = 1.0f;
     public float acceleration = 3.0f;
@@ -32,19 +34,34 @@ public class vehicleController : MonoBehaviour
     bool turningRight;
     bool pressedDrift;
 
-    public int flowForce;
-    public FlowFieldManager ffM1;
-    public FlowFieldManager ffM2;
-    public FlowFieldManager ffM3;
-    public FlowFieldManager ffM4;
-    public FlowFieldManager ffM5;
-    public FlowFieldManager ffM6;
-    public FlowFieldManager ffM7;
-    public FlowFieldManager ffM8;
+    //public int flowForce;
+    //public FlowFieldManager ffM1;
+    //public FlowFieldManager ffM2;
+    //public FlowFieldManager ffM3;
+    //public FlowFieldManager ffM4;
+    //public FlowFieldManager ffM5;
+    //public FlowFieldManager ffM6;
+    //public FlowFieldManager ffM7;
+    //public FlowFieldManager ffM8;
+
+    public FlowFieldDetector ffD;
 
     // Update is called once per frame
     void Update()
     {
+        //// Load Textures with Bitmap files
+        //BMPLoader loader = new BMPLoader();
+        ////loader.ForceAlphaReadWhenPossible = true; // can be uncomment to read alpha
+        //
+        ////load the image data
+        //BMPImage img = loader.LoadBMP("C:\\Users\\charl\\Pictures\\bmpee.bmp");
+        //
+        //// Convert the Color32 array into a Texture2D
+        //Texture2D tex = img.ToTexture2D();
+        //
+        //print(tex);
+
+
         // Track facing direction for vectors
         driftVector = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f, Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f); 
         velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
@@ -71,7 +88,7 @@ public class vehicleController : MonoBehaviour
         float minSpeedForTurn = currentVelocityPerSecond / 8;
         minSpeedForTurn = Mathf.Clamp01(minSpeedForTurn); // clamp betwee 0 & 1
 
-        //TODO move rotation based on physics, a force in the direction we wish to turn
+        //TODO CHANGE move rotation based on physics, a force in the direction we wish to turn
 
         // attach rotation to vector for steering
         Vector3 Rotation = new Vector3(0.0f, 0.0f, currentDirectionDeg - 90.0f);
@@ -83,6 +100,7 @@ public class vehicleController : MonoBehaviour
         {
             timeRightTurning -= Time.deltaTime * 2.0f; // Reset so right turn does NOT interfere
 
+            //TODO Slide Force vector runs too rampant when just holding turn direction, need to lower it with velocity
             // Left Turn Slide
             timeLeftTurning += Time.deltaTime * 2.0f;
             timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 1.5f); // clamp it
@@ -193,16 +211,10 @@ public class vehicleController : MonoBehaviour
             //rb.AddForce(forceDirection * acceleration * Time.deltaTime, ForceMode.Force);
             #endregion
         }
-        else if (!isAccelerating && currentVelocityPerSecond > 0.5f) // if not holding GO & still rolling
-        {
-            // Apply Drag
-            velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
-            currentVelocityPerSecond = Mathf.Lerp(currentVelocityPerSecond, dragForce, Time.deltaTime); // lerp between current speed and drag force overtime
-            velocityPerSecond *= currentVelocityPerSecond;
-        }
         else if (isDeccelerating)
         {
-            //TODO Speed up slowdown
+            //TODO Create a new vector to pull in the opposite direction, influencing the same vector seems inefficient
+
             //adjust reversing values, can't reverse super quick
             AdjustForces(0.0f, 2.0f, 5.0f, 5.0f, 20.0f);
  
@@ -221,12 +233,20 @@ public class vehicleController : MonoBehaviour
             //rb.AddForce(-forceDirection * acceleration * Time.deltaTime, ForceMode.Force);
             #endregion
         }
-        else if (!isDeccelerating && currentVelocityPerSecond < -0.5f) //Not decelleration, but still rolling
+        else if (!isAccelerating && currentVelocityPerSecond > 0.5f) // if not holding GO & still rolling
         {
+            // Apply Drag
             velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
-            currentVelocityPerSecond = Mathf.Lerp(currentVelocityPerSecond, dragForce, Time.deltaTime);
+            currentVelocityPerSecond = Mathf.Lerp(currentVelocityPerSecond, dragForce, Time.deltaTime); // lerp between current speed and drag force overtime
+            currentVelocityPerSecond = Mathf.Clamp(currentVelocityPerSecond, 0, 100);
             velocityPerSecond *= currentVelocityPerSecond;
         }
+        //else if (!isDeccelerating && currentVelocityPerSecond < -0.5f) //Not decelleration, but still rolling
+        //{
+        //    velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
+        //    currentVelocityPerSecond = Mathf.Lerp(currentVelocityPerSecond, dragForce, Time.deltaTime);
+        //    velocityPerSecond *= currentVelocityPerSecond;
+        //}
         else
         {
             // Reset values
@@ -238,7 +258,11 @@ public class vehicleController : MonoBehaviour
         #endregion
 
         //GET Force force from Flow Field and apply it to Car respective of EACH flowfield
-        FlowBoundry();
+        //FlowBoundry();
+
+        //TODO FLOW FIELD ACTIVATION HERE
+        // Invoke flow Field Forces onto velocity
+        velocityPerSecond += ffD.FlowBoundry();
             
         // add rotation & accel vectors to move
         transform.position += velocityPerSecond * Time.deltaTime;
@@ -259,56 +283,56 @@ public class vehicleController : MonoBehaviour
         }
     }
 
-    void FlowBoundry()
-    {
-        if (transform.position.x > ffM1.gridStartX && transform.position.x < ffM1.width + ffM1.gridStartX && transform.position.y > ffM1.gridStartY && transform.position.y < ffM1.height + ffM1.gridStartY)
-        {
-            Vector3 force = ffM1.GetForceForPosition(transform.position);
-            velocityPerSecond += force * flowForce;
-        }
-
-        if (transform.position.x > ffM2.gridStartX && transform.position.x < ffM2.width + ffM2.gridStartX && transform.position.y > ffM2.gridStartY && transform.position.y < ffM2.height + ffM2.gridStartY)
-        {
-            Vector3 force = ffM2.GetForceForPosition(transform.position);
-            velocityPerSecond += force * flowForce;
-        }
-
-        if (transform.position.x > ffM3.gridStartX && transform.position.x < ffM3.width + ffM3.gridStartX && transform.position.y > ffM3.gridStartY && transform.position.y < ffM3.height + ffM3.gridStartY)
-        {
-            Vector3 force = ffM3.GetForceForPosition(transform.position);
-            velocityPerSecond += force * flowForce;
-        }
-
-        if (transform.position.x > ffM4.gridStartX && transform.position.x < ffM4.width + ffM4.gridStartX && transform.position.y > ffM4.gridStartY && transform.position.y < ffM4.height + ffM4.gridStartY)
-        {
-            Vector3 force = ffM4.GetForceForPosition(transform.position);
-            velocityPerSecond += force * flowForce;
-        }
-
-        if (transform.position.x > ffM5.gridStartX && transform.position.x < ffM5.width + ffM5.gridStartX && transform.position.y > ffM5.gridStartY && transform.position.y < ffM5.height + ffM5.gridStartY)
-        {
-            Vector3 force = ffM5.GetForceForPosition(transform.position);
-            velocityPerSecond += force * flowForce;
-        }
-
-        if (transform.position.x > ffM6.gridStartX && transform.position.x < ffM6.width + ffM6.gridStartX && transform.position.y > ffM6.gridStartY && transform.position.y < ffM6.height + ffM6.gridStartY)
-        {
-            Vector3 force = ffM6.GetForceForPosition(transform.position);
-            velocityPerSecond += force * flowForce;
-        }
-
-        if (transform.position.x > ffM7.gridStartX && transform.position.x < ffM7.width + ffM7.gridStartX && transform.position.y > ffM7.gridStartY && transform.position.y < ffM7.height + ffM7.gridStartY)
-        {
-            Vector3 force = ffM7.GetForceForPosition(transform.position);
-            velocityPerSecond += force * flowForce;
-        }
-
-        if (transform.position.x > ffM8.gridStartX && transform.position.x < ffM8.width + ffM8.gridStartX && transform.position.y > ffM8.gridStartY && transform.position.y < ffM8.height + ffM8.gridStartY)
-        {
-            Vector3 force = ffM8.GetForceForPosition(transform.position);
-            velocityPerSecond += force * flowForce;
-        }
-    }
+    //void FlowBoundry()
+    //{
+    //    if (transform.position.x > ffM1.gridStartX && transform.position.x < ffM1.width + ffM1.gridStartX && transform.position.y > ffM1.gridStartY && transform.position.y < ffM1.height + ffM1.gridStartY)
+    //    {
+    //        Vector3 force = ffM1.GetForceForPosition(transform.position);
+    //        velocityPerSecond += force * flowForce;
+    //    }
+    //
+    //    if (transform.position.x > ffM2.gridStartX && transform.position.x < ffM2.width + ffM2.gridStartX && transform.position.y > ffM2.gridStartY && transform.position.y < ffM2.height + ffM2.gridStartY)
+    //    {
+    //        Vector3 force = ffM2.GetForceForPosition(transform.position);
+    //        velocityPerSecond += force * flowForce;
+    //    }
+    //
+    //    if (transform.position.x > ffM3.gridStartX && transform.position.x < ffM3.width + ffM3.gridStartX && transform.position.y > ffM3.gridStartY && transform.position.y < ffM3.height + ffM3.gridStartY)
+    //    {
+    //        Vector3 force = ffM3.GetForceForPosition(transform.position);
+    //        velocityPerSecond += force * flowForce;
+    //    }
+    //
+    //    if (transform.position.x > ffM4.gridStartX && transform.position.x < ffM4.width + ffM4.gridStartX && transform.position.y > ffM4.gridStartY && transform.position.y < ffM4.height + ffM4.gridStartY)
+    //    {
+    //        Vector3 force = ffM4.GetForceForPosition(transform.position);
+    //        velocityPerSecond += force * flowForce;
+    //    }
+    //
+    //    if (transform.position.x > ffM5.gridStartX && transform.position.x < ffM5.width + ffM5.gridStartX && transform.position.y > ffM5.gridStartY && transform.position.y < ffM5.height + ffM5.gridStartY)
+    //    {
+    //        Vector3 force = ffM5.GetForceForPosition(transform.position);
+    //        velocityPerSecond += force * flowForce;
+    //    }
+    //
+    //    if (transform.position.x > ffM6.gridStartX && transform.position.x < ffM6.width + ffM6.gridStartX && transform.position.y > ffM6.gridStartY && transform.position.y < ffM6.height + ffM6.gridStartY)
+    //    {
+    //        Vector3 force = ffM6.GetForceForPosition(transform.position);
+    //        velocityPerSecond += force * flowForce;
+    //    }
+    //
+    //    if (transform.position.x > ffM7.gridStartX && transform.position.x < ffM7.width + ffM7.gridStartX && transform.position.y > ffM7.gridStartY && transform.position.y < ffM7.height + ffM7.gridStartY)
+    //    {
+    //        Vector3 force = ffM7.GetForceForPosition(transform.position);
+    //        velocityPerSecond += force * flowForce;
+    //    }
+    //
+    //    if (transform.position.x > ffM8.gridStartX && transform.position.x < ffM8.width + ffM8.gridStartX && transform.position.y > ffM8.gridStartY && transform.position.y < ffM8.height + ffM8.gridStartY)
+    //    {
+    //        Vector3 force = ffM8.GetForceForPosition(transform.position);
+    //        velocityPerSecond += force * flowForce;
+    //    }
+    //}
 
     #region Old Drift Functions
 
