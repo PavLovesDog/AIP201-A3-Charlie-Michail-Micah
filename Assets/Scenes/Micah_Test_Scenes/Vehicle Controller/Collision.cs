@@ -12,8 +12,10 @@ public class Collision : MonoBehaviour
     };
 
     public Type type;
+
     public float wideness;
     public float tallness;
+
 
     public float radius;
     public float mass = 1.0f;
@@ -21,6 +23,7 @@ public class Collision : MonoBehaviour
     void Start()
     {
         radius = transform.localScale.x / 2;
+
         wideness = transform.localScale.x;
         tallness = transform.localScale.y;
 
