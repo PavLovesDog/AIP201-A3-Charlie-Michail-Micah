@@ -63,6 +63,7 @@ public class CollisionManager : MonoBehaviour
 
                 //    // Use this:  float width = GetComponent<SpriteRenderer>().bounds.size.x;
                 //}
+
             }
 
 
