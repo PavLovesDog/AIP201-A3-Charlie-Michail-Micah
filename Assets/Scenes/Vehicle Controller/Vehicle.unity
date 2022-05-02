@@ -335,6 +335,54 @@ Transform:
   m_Father: {fileID: 1112132367}
   m_RootOrder: 15
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &76768794
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 76768796}
+  - component: {fileID: 76768795}
+  m_Layer: 0
+  m_Name: Map Loader
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &76768795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 76768794}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a7cedb1461b7514db22445fc177e989, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grass: {fileID: 0}
+  mud: {fileID: 0}
+  asphalt: {fileID: 0}
+  ice: {fileID: 0}
+  default_tile: {fileID: 0}
+--- !u!4 &76768796
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 76768794}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 12.478191, y: 9.742215, z: -68.50156}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 10
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &85297141
 GameObject:
   m_ObjectHideFlags: 0
@@ -7709,12 +7757,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxSpeed: 20
-  acceleration: 5
+  acceleration: 10
+  deceleration: 4
   rotationSpeed: 180
-  dragForce: -0.5
-  currentDirectionDeg: 90
+  dragForce: 0.5
   velocityPerSecond: {x: 0, y: 0, z: 0}
   currentVelocityPerSecond: 0
+  currentDirectionDeg: 90
+  currentNegativeVelocityPerSecond: 0
   driftVector: {x: 0, y: 0, z: 0}
   driftAmount: 5
   driftAngle: 90
@@ -7723,6 +7773,8 @@ MonoBehaviour:
   timeRightTurning: 0
   isAccelerating: 0
   isDeccelerating: 0
+  turningLeft: 0
+  turningRight: 0
   ffD: {fileID: 1953619835}
 --- !u!54 &1953619832
 Rigidbody:
