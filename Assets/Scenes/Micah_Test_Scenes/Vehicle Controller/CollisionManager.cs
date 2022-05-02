@@ -56,6 +56,14 @@ public class CollisionManager : MonoBehaviour
                          } */
                     }
                 }
+
+                // Rectangle to rectangle collisions
+                //if (this_collision.type == collision.Type.Rectangle && other_collision.type == collision.Type.Rectangle)
+                //{
+
+                //    // Use this:  float width = GetComponent<SpriteRenderer>().bounds.size.x;
+                //}
+
             }
 
 
