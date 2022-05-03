@@ -67,7 +67,7 @@ public class vehicleController : MonoBehaviour
 
 
         // Track facing direction for vectors
-        driftVector = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f, Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f);
+        //driftVector = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f, Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f);
         velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
         slideForceLeft = new Vector3(Mathf.Cos((currentDirectionDeg + driftAngle) * Mathf.Deg2Rad) * 0.5f, Mathf.Sin((currentDirectionDeg + driftAngle) * Mathf.Deg2Rad) * 0.5f);
         slideForceRight = new Vector3(Mathf.Cos((currentDirectionDeg - driftAngle) * Mathf.Deg2Rad) * 0.5f, Mathf.Sin((currentDirectionDeg - driftAngle) * Mathf.Deg2Rad) * 0.5f);
@@ -110,8 +110,7 @@ public class vehicleController : MonoBehaviour
             velocityPerSecond *= currentVelocityPerSecond;
 
             //Drift vector
-            driftVector *= currentVelocityPerSecond;
-            //Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
+            //driftVector *= currentVelocityPerSecond;
 
         }
         else if (!isAccelerating && currentVelocityPerSecond > 0.5f) // if not holding GO & still rolling
@@ -128,12 +127,14 @@ public class vehicleController : MonoBehaviour
             // Reset values
             currentVelocityPerSecond = 0;
             velocityPerSecond = Vector3.zero;
-            driftVector = Vector3.zero;
+            //driftVector = Vector3.zero;
         }
 
         #region Deceleration 
         if (isDeccelerating)
         {
+            //TODO OMG THIS WORKS. what te fuck
+            currentVelocityPerSecond -= 4 * Time.deltaTime;
             //adjust reversing values, can't reverse super quick
            // AdjustForces(0.0f, 2.0f, 5.0f, 5.0f, 20.0f);
             
@@ -231,7 +232,8 @@ public class vehicleController : MonoBehaviour
                     timeLeftTurning += Time.deltaTime * 5; // slideing timer
                     timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 2.0f); // clamp ity
                     slideForceLeft *= (timeLeftTurning * 8) * minSpeedForTurn;
-                }
+                    Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
+            }
 
 
             }
@@ -242,7 +244,6 @@ public class vehicleController : MonoBehaviour
                 timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 1.5f);
                 slideForceLeft *= (timeLeftTurning * 5) * minSpeedForTurn;
                 velocityPerSecond -= slideForceLeft * Time.deltaTime * driftAmount;
-                Debug.DrawLine(transform.position, transform.position + slideForceLeft, Color.magenta); // DEBUG
             }
 
             // RIGHT TURNING ======================================================================================
@@ -276,7 +277,7 @@ public class vehicleController : MonoBehaviour
                     timeRightTurning += Time.deltaTime * 5;
                     timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 2.0f); // clamp it
                     slideForceRight *= (timeRightTurning * 8) * minSpeedForTurn;
-                }
+            }
 
             }
             else if (!turningLeft && !turningRight && timeRightTurning > 0.0f)
