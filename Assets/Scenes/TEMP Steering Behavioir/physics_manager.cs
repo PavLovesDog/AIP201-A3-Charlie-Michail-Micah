@@ -16,6 +16,9 @@ public class physics_manager : MonoBehaviour
             {
                 // do not detect collision with self
                 if (this_collision == other_collision) continue;
+                // do not collide with other objects with the same tag
+                if (this_collision.tag == other_collision.tag) continue;
+
 
                 // detect collisions!
 
@@ -63,7 +66,7 @@ public class physics_manager : MonoBehaviour
                 }
 
                 // RECT TO RECT COLLISION
-                if (this_collision.type == collision.Type.Rectangle && // if this object is a circle
+                if (this_collision.type == collision.Type.Rectangle && // if this object is a rectangle
                     other_collision.type == collision.Type.Rectangle)
                 {
                     if (this_collision.X_coordinate < other_collision.X_coordinate + other_collision.rect_width &&
@@ -80,6 +83,9 @@ public class physics_manager : MonoBehaviour
                         float this_mass_ratio = this_collision.mass / total_mass;
 
                         //TODO Move accordingly!
+                        //---This is Micah testing stuff. If it's commented out, it's probably best kept that way---//
+
+
                     }
                 }
 

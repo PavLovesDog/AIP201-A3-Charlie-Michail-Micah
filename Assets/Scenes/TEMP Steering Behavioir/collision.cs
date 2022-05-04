@@ -39,6 +39,11 @@ public class collision : MonoBehaviour
         {
             // find the radius of circle by getting diameter(length of x) / 2
             radius = transform.localScale.x / 2;
+
+            if(this.transform.tag == "Car Collider")
+            {
+                radius = radius / 2;
+            }
         }
         else if (type == Type.line) // if its a line
         {
