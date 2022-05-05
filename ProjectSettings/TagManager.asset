@@ -3,7 +3,14 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Destination
+  - FlowField
+  - Car Collider
+  - Wall Collider
+  - A.I FlowField
+  - Player FlowField
+  - NPC
   layers:
   - Default
   - TransparentFX
