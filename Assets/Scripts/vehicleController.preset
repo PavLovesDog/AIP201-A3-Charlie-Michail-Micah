@@ -30,7 +30,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: acceleration
-    value: 10
+    value: 15
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: deceleration

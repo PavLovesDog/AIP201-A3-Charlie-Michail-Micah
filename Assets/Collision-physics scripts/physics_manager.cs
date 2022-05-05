@@ -4,10 +4,13 @@ using UnityEngine;
 
 public class physics_manager : MonoBehaviour
 {
+    public collision[] collisions;
+    public float push_back;
+
     void Update()
     {
         // for all objects that have colliders, detect collision
-        collision[] collisions = FindObjectsOfType<collision>();
+        collisions = FindObjectsOfType<collision>();
 
         foreach(collision this_collision in collisions)
         {
@@ -110,8 +113,66 @@ public class physics_manager : MonoBehaviour
                     }
                 }
 
-                //LINE TO LINE COLLISION =========================================================================
+                //RECT TO WALL COLLISION =========================================================================     WWWAAAAALLLLLLLL
+                if (this_collision.type == collision.Type.Rectangle && // if this object is a REC
+                   other_collision.type == collision.Type.Wall) // if other object is a WALL
+                {
+                    //Track vectors between objects
+                    Vector3 this_to_other = other_collision.transform.position - this_collision.transform.position;
+                    Vector3 other_to_this = this_collision.transform.position - other_collision.transform.position;
+                    float distance_this_to_other = this_to_other.magnitude;
 
+
+                    /*
+                     * Coordinates Reference for bools
+                     * 
+                     * This object              Other object
+                        ty1---------ty2         oy1---------oy2
+                        |           |           |           |
+                        |           |           |           |
+                        |           |           |           |
+                        |           |           |           |
+                        tx1---------tx2         ox1---------ox2
+                     */
+                    float intersection_depth_x = this_collision.rect_width + other_collision.rect_width - distance_this_to_other;
+                    float intersection_depth_y = this_collision.rect_height + other_collision.rect_height - distance_this_to_other;
+
+                    bool tx1_is_left_of_ox2 = this_collision.X_coordinate < other_collision.X_coordinate + other_collision.rect_width;
+                    bool tx2_is_right_of_ox1 = this_collision.X_coordinate + this_collision.rect_width > other_collision.X_coordinate;
+                    bool tx1_is_below_oy1 = this_collision.Y_coordinate < other_collision.Y_coordinate + other_collision.rect_height;
+                    bool ty1_is_above_ox1 = this_collision.Y_coordinate + this_collision.rect_height > other_collision.Y_coordinate;
+
+                    if (tx1_is_left_of_ox2 &&
+                        tx2_is_right_of_ox1 &&
+                        tx1_is_below_oy1 &&
+                        ty1_is_above_ox1)
+                    {
+                        print("Things are COLLIDING");
+
+                        // Handle mass properties
+                        float total_mass = this_collision.mass + other_collision.mass; // find total mass involved in colilsion
+                        // find ratios of who takes more or less of the collision direction
+                        float other_mass_ratio = other_collision.mass / total_mass;
+                        float this_mass_ratio = this_collision.mass / total_mass;
+
+                        //if(intersection_depth_x > 0.0f)
+                        //{
+                        //    this_collision.transform.position += other_to_this.normalized * other_mass_ratio * intersection_depth_x; //* push_back;
+                        //}
+                        //
+                        //if (intersection_depth_y > 0.0f)
+                        //{
+                        //    this_collision.transform.position += other_to_this.normalized * other_mass_ratio * intersection_depth_y; //* push_back;
+                        //}
+
+                        //TODO Move accordingly!
+                        // Move other object using this_to_other vector direction multiplied by the intersection depth & this objects mass
+                        //other_collision.transform.position += this_to_other.normalized * this_mass_ratio * 0.1f; //TODO Magic numbers a no-no!
+
+                        // move this object using other_to_this vector direction multiplied by the intersection depth & other objects mass
+                        this_collision.transform.position += other_to_this.normalized * other_mass_ratio * push_back;
+                    }
+                }
             }
         }
 

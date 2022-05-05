@@ -9,7 +9,7 @@ public class collision : MonoBehaviour
     {
         Circle,    // 0
         Rectangle, // 1
-        Triangle,  // 2
+        Wall,  // 2
         line,      // 3
         Point      // 4
     };
@@ -67,9 +67,17 @@ public class collision : MonoBehaviour
             X_coordinate = bottom_left_corner_X; // X coordinate
             Y_coordinate = bottom_left_corner_Y; // y coordinate
         }
-        else if (type == Type.line) // of rectangle...
+        else if (type == Type.Wall) // of rectangle...
         {
+            rect_width = transform.localScale.x; // how wide on x axis
+            rect_height = transform.localScale.y; // how tall on y axis
 
+            // find bottom left corner & track
+            bottom_left_corner_X = this.transform.localPosition.x - (rect_width / 2);
+            bottom_left_corner_Y = this.transform.localPosition.y - (rect_height / 2);
+
+            X_coordinate = bottom_left_corner_X; // X coordinate
+            Y_coordinate = bottom_left_corner_Y; // y coordinate
         }
         else if(type == Type.Point)
         {

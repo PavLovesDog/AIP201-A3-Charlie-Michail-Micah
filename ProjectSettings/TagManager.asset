@@ -8,6 +8,9 @@ TagManager:
   - FlowField
   - Car Collider
   - Wall Collider
+  - A.I FlowField
+  - Player FlowField
+  - NPC
   layers:
   - Default
   - TransparentFX

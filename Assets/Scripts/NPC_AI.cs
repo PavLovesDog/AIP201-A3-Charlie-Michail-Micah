@@ -88,19 +88,7 @@ public class NPC_AI : MonoBehaviour
 
         // Vector3 newDirection = Vector3.RotateTowards(transform.position, (Destination.position - transform.position), Mathf.Deg2Rad * 90, 2.0f);
         //transform.rotation = Quaternion.LookRotation(newDirection);
-        
-        //// refill course
-        //if(destinations.Count <= 1)
-        //{
-        //    GameObject[] D = GameObject.FindGameObjectsWithTag("Destination");
-        //
-        //    foreach (GameObject ds in D)
-        //    {
-        //        destinations.Add(ds.transform);
-        //    }
-        //}
-
-
+  
         Vector3 ActorToDestination = Destination.transform.position - this.transform.position;
         distanceToDestination = ActorToDestination.magnitude;
 
