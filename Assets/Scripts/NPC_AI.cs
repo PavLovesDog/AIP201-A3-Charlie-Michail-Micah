@@ -79,15 +79,14 @@ public class NPC_AI : MonoBehaviour
         Vector3 newDirection = (Destination.position - transform.position);
         Debug.DrawRay(transform.position, newDirection, Color.red);
 
-        transform.up = newDirection;//Vector3.Lerp(transform.position, (Destination.position - transform.position), 1.0f);
-        
+       transform.up = newDirection; //Vector3.Lerp(transform.position, (Destination.position - transform.position), 1.0f);
         //Quaternion.RotateTowards()
 
         //transform.up = Vector3.RotateTowards(transform.position, (Destination.position - transform.position), Mathf.Deg2Rad * 90, 2.0f);
 
         // Vector3 newDirection = Vector3.RotateTowards(transform.position, (Destination.position - transform.position), Mathf.Deg2Rad * 90, 2.0f);
         //transform.rotation = Quaternion.LookRotation(newDirection);
-  
+
         Vector3 ActorToDestination = Destination.transform.position - this.transform.position;
         distanceToDestination = ActorToDestination.magnitude;
 

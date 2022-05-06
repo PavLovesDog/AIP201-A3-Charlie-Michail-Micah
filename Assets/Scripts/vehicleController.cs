@@ -119,7 +119,7 @@ public class vehicleController : MonoBehaviour
         #region Deceleration 
         if (isDeccelerating)
         {
-            //TODO OMG THIS WORKS. what te fuck
+            //TODO OMG THIS WORKS. what the fuck
             currentVelocityPerSecond -= 4 * Time.deltaTime;
             
             // assign deceleration force
