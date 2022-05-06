@@ -5,14 +5,14 @@ using B83.Image.BMP;
 
 public class vehicleController : MonoBehaviour
 {
-
-    //Forces
+    /* A lot of these varibles can be hidden when testing is done */
+    
+    [Header("FORCES % VELOCITY")]
     public float maxSpeed = 1.0f;
     public float acceleration = 3.0f;
     public float deceleration = 0.0f;
     public float rotationSpeed = 90.0f;
     public float dragForce = -3.0f;
-
     //Velocity
     public Vector3 velocityPerSecond = Vector3.zero;
     Vector3 decelrationForce = Vector3.zero;
@@ -21,6 +21,7 @@ public class vehicleController : MonoBehaviour
     public float currentNegativeVelocityPerSecond = 0.0f;
 
     //Drift & Slide
+    [Header("DRIFT & SLIDE")]
     public Vector3 driftVector = Vector3.zero;
     Vector3 slideForceLeft = Vector3.zero;
     Vector3 slideForceRight = Vector3.zero;
@@ -38,33 +39,22 @@ public class vehicleController : MonoBehaviour
     public bool turningRight;
     bool pressedDrift;
 
-    //public int flowForce;
-    //public FlowFieldManager ffM1;
-    //public FlowFieldManager ffM2;
-    //public FlowFieldManager ffM3;
-    //public FlowFieldManager ffM4;
-    //public FlowFieldManager ffM5;
-    //public FlowFieldManager ffM6;
-    //public FlowFieldManager ffM7;
-    //public FlowFieldManager ffM8;
-
+    [Header("TRACK REFERENCES")]
+    public GameObject startFinishLine;
+    public GameObject lapCountReset;
+    public bool readyToCrossFinishLine;
+    public int lap = 0;
     public FlowFieldDetector ffD;
 
-    // Update is called once per frame
+    private void Start()
+    {
+        readyToCrossFinishLine = false;
+    }
+
     void Update()
     {
-        //// Load Textures with Bitmap files
-        //BMPLoader loader = new BMPLoader();
-        ////loader.ForceAlphaReadWhenPossible = true; // can be uncomment to read alpha
-        //
-        ////load the image data
-        //BMPImage img = loader.LoadBMP("C:\\Users\\charl\\Pictures\\bmpee.bmp");
-        //
-        //// Convert the Color32 array into a Texture2D
-        //Texture2D tex = img.ToTexture2D();
-        //
-        //print(tex);
 
+        TrackLap();
 
         // Track facing direction for vectors
         //driftVector = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f, Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f);
@@ -99,10 +89,6 @@ public class vehicleController : MonoBehaviour
 
         if (isAccelerating)
         {
-
-            // set speeds, for smooth changes between reverse to accelerate
-            //AdjustForces(15.0f, 15.0f, 15.0f, 5.0f, 15.0f);
-
             //apply acceleration to velocity
             currentVelocityPerSecond += acceleration * Time.deltaTime;
             currentVelocityPerSecond = Mathf.Clamp(currentVelocityPerSecond, -maxSpeed, maxSpeed);
@@ -135,8 +121,6 @@ public class vehicleController : MonoBehaviour
         {
             //TODO OMG THIS WORKS. what te fuck
             currentVelocityPerSecond -= 4 * Time.deltaTime;
-            //adjust reversing values, can't reverse super quick
-           // AdjustForces(0.0f, 2.0f, 5.0f, 5.0f, 20.0f);
             
             // assign deceleration force
             decelrationForce = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
@@ -184,23 +168,32 @@ public class vehicleController : MonoBehaviour
 
     }
 
-        // function to adjust speeds for faster take offs when accelerating
-        void AdjustForces(float desiredVelocity, float newAccel, float newMaxSpeed, float originalAccel, float originalMaxSpeed)
-        {
-            //TODO !!!!Changing editor values!!!!!
-            if (currentVelocityPerSecond < desiredVelocity)
-            {
-                maxSpeed = newMaxSpeed; //TODO not sure if needed
-                acceleration = newAccel; // quick take offs
-            }
-            else if (currentVelocityPerSecond > desiredVelocity)
-            {
-                maxSpeed = originalMaxSpeed;
-                acceleration = originalAccel;
-            }
-        }
+    void TrackLap()
+    {
+        bool lapCountReset = transform.position.x > (this.lapCountReset.transform.position.x - this.lapCountReset.transform.localScale.x) &&
+                             transform.position.x < this.lapCountReset.transform.localScale.x + this.lapCountReset.transform.position.x &&
+                             transform.position.y > (this.lapCountReset.transform.position.y - this.lapCountReset.transform.localScale.y) &&
+                             transform.position.y < this.lapCountReset.transform.localScale.y + this.lapCountReset.transform.position.y;
 
-        Vector3 HandleTurningAndSlide(Vector3 velocityPerSecond)
+        bool isTouchingLapLine = transform.position.x > (startFinishLine.transform.position.x - startFinishLine.transform.localScale.x) &&
+                                 transform.position.x < startFinishLine.transform.localScale.x + startFinishLine.transform.position.x &&
+                                 transform.position.y > (startFinishLine.transform.position.y - startFinishLine.transform.localScale.y) &&
+                                 transform.position.y < startFinishLine.transform.localScale.y + startFinishLine.transform.position.y;
+
+
+        if (lapCountReset)
+            readyToCrossFinishLine = true;
+
+
+        if (isTouchingLapLine && readyToCrossFinishLine)
+        {
+            readyToCrossFinishLine = false; // bool so it only happens once
+            print("touching the FINISH LINE WOOOOOO!");
+            lap++;
+        }
+    }
+
+    Vector3 HandleTurningAndSlide(Vector3 velocityPerSecond)
         {
             // LEFT TURNING =====================================================================================
             if (turningLeft)

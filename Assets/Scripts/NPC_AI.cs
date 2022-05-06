@@ -10,35 +10,36 @@ public class NPC_AI : MonoBehaviour
         TRACKING,
     };
     
-    [Header("Current State")]
+    [Header("NPC VARIABLES")]
     public State state = State.IDLE;
-    Vector3 velocityPerSecond = Vector3.zero;
-    public FlowFieldDetector ffD;
-
-
-    [Header("Destination variables")]
-    public Transform Destination; //TODO This will need to be a list that cycles through locations for car to chase
-    public Transform directionObject;
-    public List<Transform> destinations = new List<Transform>();
-    Vector3 desiredDirection = Vector3.zero;
-    public float currentDirectionDeg = 90.0f;
-
-    public bool onToNextLocation = false;
-    public bool nearDestination = false;
-    public bool goneTooFar = false;
-    public bool gate = false;
-    public bool gate2 = false;
-    public int trackingIndex = 0;
-    public float tooFarTimer = 0.0f;
-    public float trackingTimer = 0.0f;
-    public float distanceToDestination = 0.0f;
-
-    [Header("Chase Variables")]
     public float speed = 1.0f;
     public float steering_speed = 1.0f;
+    Vector3 velocityPerSecond = Vector3.zero;
 
-    float boundry_X = 4.5f;
-    float boundry_Y = 4.5f;
+
+    [Header("DESTINATION VARIABLES")]
+    public Transform Destination;
+    public Transform directionObject;
+    public List<Transform> destinations = new List<Transform>();
+    public float currentDirectionDeg = 90.0f;
+    Vector3 desiredDirection = Vector3.zero;
+
+    [Header("TRACKING VARIABLES")]
+    public bool onToNextLocation = false;
+    public bool nearDestination = false;
+    public bool gate = false;
+    public int trackingIndex = 0;
+    public float distanceToDestination = 0.0f;
+
+    [Header("RACE VARIABLES")]
+    public GameObject startFinishLine;
+    public GameObject lapCountReset;
+    bool readyToCrossFinishLine;
+    public int lap = 0;
+
+    [Header("SCRIPT REFERENCES")]
+    public FlowFieldDetector ffD;
+    public GameManager gmScript;
 
     void TransitionTo(State transitionTo)
     {
@@ -55,23 +56,21 @@ public class NPC_AI : MonoBehaviour
     void OnExit(State entering)
     {
         //ON EXIT EVENT
-        //print("Goblin Exiting: " + state.ToString() + " to: " + entering.ToString());
     }
 
     void OnEnter(State exiting)
     {
         //ON ENTER EVENT
-        //print("Goblin Entering: " + state.ToString() + " from: " + exiting.ToString());
     }
 
 
     // Plays once per frame
     void OnUpdate()
     {
+        // ============================================================================ ROTATION
         //Vector3 Rotation = new Vector3(0.0f, 0.0f, currentDirectionDeg - 90.0f);
         //transform.eulerAngles = Rotation;
         //velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
-
 
         //TRYING TO FOND SMOOTH ROTATION
         // transform.LookAt(Destination);
@@ -92,19 +91,14 @@ public class NPC_AI : MonoBehaviour
         Vector3 ActorToDestination = Destination.transform.position - this.transform.position;
         distanceToDestination = ActorToDestination.magnitude;
 
+        // ===================================================================================== AI PATH FOLLOWING
         nearDestination = distanceToDestination < 5.0f;
-        goneTooFar = distanceToDestination > 20.0f;
         bool repeatTrack = trackingIndex < 1;
-        bool trackedTooLong = trackingTimer > 2.5f;
-
-
 
         // double bool gate for update location
         if (nearDestination)
         {
            gate = true;
-
-            //onToNextLocation = true;
         }
 
         // UPDATE NEXT POSITION TO TRACK
@@ -172,7 +166,7 @@ public class NPC_AI : MonoBehaviour
 
         #endregion
 
-        trackingTimer += Time.deltaTime;
+        //trackingTimer += Time.deltaTime;
         Destination = destinations[trackingIndex]; // constantly update destination to top position i nlist
 
         switch (state)
@@ -182,11 +176,7 @@ public class NPC_AI : MonoBehaviour
                     //watch for player distance
                     ActorToDestination = Destination.transform.position - this.transform.position;
                     distanceToDestination = ActorToDestination.magnitude;
-                    
-
                     TransitionTo(State.TRACKING);
-                    
-                   
                     break;
                 }
             case State.TRACKING:
@@ -200,12 +190,9 @@ public class NPC_AI : MonoBehaviour
                     //Set desired direction object.
                     directionObject.transform.position = Destination.transform.position;
 
-                    // if close, add intercept
-                    if (distanceToDestination < 2.0f)
-                    {
-                        
+                    
                         /*Intercept*/
-                        //TODO THIS can be used for making the tracking points moving side to side, to keep car tracking interesting.?
+                        //TODO THIS can be used for making the tracking points moving side to side, to keep car tracking interesting.??
                         {
                                 ////Get reference to player & track its trajectory(speed & location)/interception time
                                 //player_ai playerScript = Destination.GetComponent<player_ai>();
@@ -229,13 +216,16 @@ public class NPC_AI : MonoBehaviour
                                 //// Determine New Velocity With Speed
                                 //velocity_per_second = steering_and_current * speed;
                         }
+                    
+
+                    // check Game Manager
+                    if(gmScript.isGameRunning)
+                    {
+                        // Chase!
+                        HandleSteering();
+
+                        velocityPerSecond += ffD.FlowBoundry();
                     }
-
-                    // Chase!
-                    HandleSteering();
-
-                    velocityPerSecond += ffD.FlowBoundry();
-
                     break;
                 }
         } 
@@ -263,13 +253,43 @@ public class NPC_AI : MonoBehaviour
         transform.position += velocityPerSecond * Time.deltaTime;
     }
 
+    void TrackLap()
+    {
+        bool lapCountReset = transform.position.x > (this.lapCountReset.transform.position.x - this.lapCountReset.transform.localScale.x) &&
+                             transform.position.x < this.lapCountReset.transform.localScale.x + this.lapCountReset.transform.position.x &&
+                             transform.position.y > (this.lapCountReset.transform.position.y - this.lapCountReset.transform.localScale.y) &&
+                             transform.position.y < this.lapCountReset.transform.localScale.y + this.lapCountReset.transform.position.y;
+
+        bool isTouchingLapLine = transform.position.x > (startFinishLine.transform.position.x - startFinishLine.transform.localScale.x) &&
+                                 transform.position.x < startFinishLine.transform.localScale.x + startFinishLine.transform.position.x &&
+                                 transform.position.y > (startFinishLine.transform.position.y - startFinishLine.transform.localScale.y) &&
+                                 transform.position.y < startFinishLine.transform.localScale.y + startFinishLine.transform.position.y;
+
+
+        if (lapCountReset)
+            readyToCrossFinishLine = true;
+
+
+        if (isTouchingLapLine && readyToCrossFinishLine)
+        {
+            readyToCrossFinishLine = false; // bool so it only happens once
+            print("touching the FINISH LINE WOOOOOO!");
+            lap++;
+        }
+    }
+
     void Update()
     {
         OnUpdate();
+
+        TrackLap();
     }
 
     private void Start()
     {
+        readyToCrossFinishLine = false;
+
+        // Set up Destinations to follow
         GameObject[] D = GameObject.FindGameObjectsWithTag("Destination");
 
         foreach(GameObject ds in D)
@@ -278,7 +298,6 @@ public class NPC_AI : MonoBehaviour
         }
 
         trackingIndex = destinations.Count - 1; // set index amount
-
         Destination = destinations[trackingIndex];
     }
 }
