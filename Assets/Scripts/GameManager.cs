@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
         
     [Header("UI")]
     public GameObject startButton;
+    public GameObject openScreen;
     public TMP_Text lapCount;
     public TMP_Text Winner;
     public GameObject WinnerPanel;
@@ -27,6 +28,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        openScreen.SetActive(true);
         isGameRunning = false;
 
         // detect NPCS
@@ -96,6 +98,7 @@ public class GameManager : MonoBehaviour
 
     public void OnStartButton()
     {
+        openScreen.SetActive(false);
         isGameRunning = true;
 
         startButton.SetActive(false);
@@ -108,6 +111,7 @@ public class GameManager : MonoBehaviour
     {
         isGameRunning = false;
 
+        openScreen.SetActive(true);
         startButton.SetActive(true);
     }
 

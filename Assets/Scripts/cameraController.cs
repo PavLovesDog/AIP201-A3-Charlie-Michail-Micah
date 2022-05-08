@@ -17,6 +17,12 @@ public class cameraController : MonoBehaviour
      * FixedUpdate - for rigid body
      * 
      */
+
+    private void Start()
+    {
+        Screen.SetResolution(1000, 1000, false);
+    }
+
     void LateUpdate()
     {
         Vector3 playerPosition = player.position + offset;
