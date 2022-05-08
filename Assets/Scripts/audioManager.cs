@@ -9,11 +9,20 @@ public class audioManager : MonoBehaviour
     public AudioClip skidSound; // an audio clip is good for short sounds
     public AudioSource raceMusic; // an audio source would better play long tracks such as overworld music
     */
+
+    //Audio sources
     public AudioSource audioSource; // all sound will come from this object, for ease
     public AudioSource raceMusic; // over world music
+    public AudioSource drivingSource;
+    public AudioSource accelerationSource;
+    public AudioSource driftSource;
+    public AudioSource skidSource;
+
+    // audio clips
+    public AudioClip drivingSound;
+    public AudioClip accelerationSound;
     public AudioClip skidSound1;
     public AudioClip skidSound2;
-    public AudioClip drivingSound;
     public AudioClip honkSound1;
     public AudioClip honkSound2;
 
@@ -21,12 +30,20 @@ public class audioManager : MonoBehaviour
 
     // this function is to play a single audio clip, callable from another script
     // it passes in the desired sound to play and at which volume
-    public void PlayAudio(AudioClip sound, float volume)
+    public void PlayAudio(AudioSource source, AudioClip sound, float volume)
     {
-        audioSource.clip = sound; // set the desired sound to play
-        audioSource.pitch = Random.Range(0.75f, 1.0f); // shift pitch so sounds aren't always the same
-        audioSource.volume = volume; // set volume
-        audioSource.PlayOneShot(sound);  // this plays the sound ONCE
+        //AudioSource chosenSource = source;
+        if(source.isPlaying)
+        {
+            // do nothing, but WAIT for finish!?
+        }
+        else
+        {
+            source.clip = sound; // set the desired sound to play
+            source.pitch = Random.Range(0.75f, 1.0f); // shift pitch so sounds aren't always the same
+            source.volume = volume; // set volume
+            source.Play();  // this plays the sound
+        }
     }
 
     //Maybe another function for sustained sound?

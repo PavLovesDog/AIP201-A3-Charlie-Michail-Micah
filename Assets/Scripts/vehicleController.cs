@@ -46,6 +46,7 @@ public class vehicleController : MonoBehaviour
     public int lap = 0;
     public FlowFieldDetector ffD;
     public GameManager gm;
+    public audioManager audioM;
 
     private void Start()
     {
@@ -93,6 +94,9 @@ public class vehicleController : MonoBehaviour
             #region Acceleration
             if (isAccelerating)
             {
+                //play sounds
+                audioM.PlayAudio(audioM.accelerationSource, audioM.accelerationSound, 0.5f);
+
                 //apply acceleration to velocity
                 currentVelocityPerSecond += acceleration * Time.deltaTime;
                 currentVelocityPerSecond = Mathf.Clamp(currentVelocityPerSecond, -maxSpeed, maxSpeed);
@@ -105,6 +109,9 @@ public class vehicleController : MonoBehaviour
             }
             else if (!isAccelerating && currentVelocityPerSecond > 0.5f) // if not holding GO & still rolling
             {
+                //play engine sounds
+               audioM.PlayAudio(audioM.drivingSource, audioM.drivingSound, 0.5f);
+
                 // Apply Drag
                 velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
                 currentVelocityPerSecond = Mathf.Lerp(currentVelocityPerSecond, 0, Time.deltaTime * dragForce); // lerp between current speed and drag force overtime
