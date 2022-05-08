@@ -234,7 +234,12 @@ public class vehicleController : MonoBehaviour
                 timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 2.0f); // clamp ity
                 slideForceLeft *= (timeLeftTurning * 8) * minSpeedForTurn;
                 Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
+                gm.Drift.SetActive(true);
             }
+            else
+            {
+                gm.Drift.SetActive(false);
+            }    
 
 
         }
@@ -280,6 +285,11 @@ public class vehicleController : MonoBehaviour
                 timeRightTurning += Time.deltaTime * 5;
                 timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 2.0f); // clamp it
                 slideForceRight *= (timeRightTurning * 8) * minSpeedForTurn;
+                gm.Drift.SetActive(true);
+            }
+            else
+            {
+                gm.Drift.SetActive(false);
             }
 
         }

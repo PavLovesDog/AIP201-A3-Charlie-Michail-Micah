@@ -10,10 +10,13 @@ public class GameManager : MonoBehaviour
 
     [Header("Race Variables")]
     public int lapsToFinish;
-    public TMP_Text lapCount;
         
     [Header("UI")]
     public GameObject startButton;
+    public TMP_Text lapCount;
+    public TMP_Text Winner;
+    public GameObject WinnerPanel;
+    public GameObject Drift;
 
     [Header("CARS")]
     public List<NPC_AI> NPCScripts = new List<NPC_AI>();
@@ -37,6 +40,10 @@ public class GameManager : MonoBehaviour
 
         // not have music start immediately
         audioManager.StopRaceMusic();
+
+        WinnerPanel.SetActive(false);
+
+        Drift.SetActive(false);
     }
 
     void Update()
@@ -49,6 +56,12 @@ public class GameManager : MonoBehaviour
 
             print(player.ToString() + " is the winner!!");
 
+            string message;
+            message = player.ToString();
+            message = message.Replace("(vehicleController)", "");
+
+            Winner.text = message + " is the winner!!";
+            WinnerPanel.SetActive(true);
         }
 
         // NPC check
@@ -57,13 +70,21 @@ public class GameManager : MonoBehaviour
             if (NPCScripts[i].lap == lapsToFinish)
             {
                 isGameRunning = false;
-
+                
                 print(NPCScripts[i].ToString() + " is the winner!!");
+
+                //Show winner on Panel
+                string message;
+                message = NPCScripts[i].ToString();
+                message = message.Replace("NPC_AI", "");
+
+                Winner.text = NPCScripts[i].ToString() + " is the winner!!";
+                WinnerPanel.SetActive(true);
             }
         }
 
         //Track who is in the lead?
-
+        lapCount.text = "Lap: " + player.lap.ToString();
     }
 
     public void OnStartButton()
@@ -82,4 +103,9 @@ public class GameManager : MonoBehaviour
 
         startButton.SetActive(true);
     }
+
+    //public void DriftButton()
+    //{
+    //
+    //}
 }
