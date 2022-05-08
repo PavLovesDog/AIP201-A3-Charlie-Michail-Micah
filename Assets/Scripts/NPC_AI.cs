@@ -40,6 +40,7 @@ public class NPC_AI : MonoBehaviour
     [Header("SCRIPT REFERENCES")]
     public FlowFieldDetector ffD;
     public GameManager gmScript;
+    public audioManager audioManager;
 
     void TransitionTo(State transitionTo)
     {
@@ -68,24 +69,11 @@ public class NPC_AI : MonoBehaviour
     void OnUpdate()
     {
         // ============================================================================ ROTATION
-        //Vector3 Rotation = new Vector3(0.0f, 0.0f, currentDirectionDeg - 90.0f);
-        //transform.eulerAngles = Rotation;
-        //velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
-
-        //TRYING TO FOND SMOOTH ROTATION
-        // transform.LookAt(Destination);
-        //transform.up = Destination.position - transform.position;
-
+  
         Vector3 newDirection = (Destination.position - transform.position);
         Debug.DrawRay(transform.position, newDirection, Color.red);
 
-       transform.up = newDirection; //Vector3.Lerp(transform.position, (Destination.position - transform.position), 1.0f);
-        //Quaternion.RotateTowards()
-
-        //transform.up = Vector3.RotateTowards(transform.position, (Destination.position - transform.position), Mathf.Deg2Rad * 90, 2.0f);
-
-        // Vector3 newDirection = Vector3.RotateTowards(transform.position, (Destination.position - transform.position), Mathf.Deg2Rad * 90, 2.0f);
-        //transform.rotation = Quaternion.LookRotation(newDirection);
+        transform.up = newDirection; // not smooth, but at least they look their destination!
 
         Vector3 ActorToDestination = Destination.transform.position - this.transform.position;
         distanceToDestination = ActorToDestination.magnitude;
@@ -142,7 +130,6 @@ public class NPC_AI : MonoBehaviour
                 }
             case State.TRACKING:
                 {
-
                     // find vector of self to destination
                     ActorToDestination = Destination.transform.position - this.transform.position;
                     distanceToDestination = ActorToDestination.magnitude;
@@ -186,6 +173,9 @@ public class NPC_AI : MonoBehaviour
         transform.position += velocityPerSecond * Time.deltaTime;
     }
 
+    // A function to track the lap of each agent. 
+    // checks if agents have hit a certain point then increments their lap count
+    // when they cross the starting line
     void TrackLap()
     {
         // if actor is touching the object
