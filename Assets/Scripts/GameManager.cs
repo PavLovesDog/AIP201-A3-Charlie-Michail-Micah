@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -9,7 +10,8 @@ public class GameManager : MonoBehaviour
 
     [Header("Race Variables")]
     public int lapsToFinish;
-
+    public TMP_Text lapCount;
+        
     [Header("UI")]
     public GameObject startButton;
 
@@ -72,5 +74,12 @@ public class GameManager : MonoBehaviour
 
         // start music at 1/2 volume
         audioManager.PlayRaceMusic(0.1f);
+    }
+
+    public void OnPauseButton()
+    {
+        isGameRunning = false;
+
+        startButton.SetActive(true);
     }
 }

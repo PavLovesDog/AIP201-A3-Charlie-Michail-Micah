@@ -45,6 +45,7 @@ public class vehicleController : MonoBehaviour
     public bool readyToCrossFinishLine;
     public int lap = 0;
     public FlowFieldDetector ffD;
+    public GameManager gm;
 
     private void Start()
     {
@@ -87,84 +88,90 @@ public class vehicleController : MonoBehaviour
         Vector3 Rotation = new Vector3(0.0f, 0.0f, currentDirectionDeg - 90.0f);
         transform.eulerAngles = Rotation; // This is what steers or perp
 
-        if (isAccelerating)
+        if (gm.isGameRunning)
         {
-            //apply acceleration to velocity
-            currentVelocityPerSecond += acceleration * Time.deltaTime;
-            currentVelocityPerSecond = Mathf.Clamp(currentVelocityPerSecond, -maxSpeed, maxSpeed);
-            velocityPerSecond = HandleTurningAndSlide(velocityPerSecond);
-            velocityPerSecond *= currentVelocityPerSecond;
-
-            //Drift vector
-            //driftVector *= currentVelocityPerSecond;
-
-        }
-        else if (!isAccelerating && currentVelocityPerSecond > 0.5f) // if not holding GO & still rolling
-        {
-            // Apply Drag
-            velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
-            currentVelocityPerSecond = Mathf.Lerp(currentVelocityPerSecond, 0, Time.deltaTime * dragForce); // lerp between current speed and drag force overtime
-            currentVelocityPerSecond = Mathf.Clamp(currentVelocityPerSecond, 0, 100);
-            velocityPerSecond = HandleTurningAndSlide(velocityPerSecond);
-            velocityPerSecond *= currentVelocityPerSecond;
-        }
-        else
-        {
-            // Reset values
-            currentVelocityPerSecond = 0;
-            velocityPerSecond = Vector3.zero;
-            //driftVector = Vector3.zero;
-        }
-
-        #region Deceleration 
-        if (isDeccelerating)
-        {
-            //TODO OMG THIS WORKS. what the fuck
-            currentVelocityPerSecond -= 4 * Time.deltaTime;
-            
-            // assign deceleration force
-            decelrationForce = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
-            decelrationForce *= -deceleration;
-
-            Debug.DrawLine(transform.position, transform.position + decelrationForce, Color.cyan);
-
-            //allow for turning whilst reversing
-            if (turningLeft)
+            #region Acceleration
+            if (isAccelerating)
             {
-                // allow turning no matter what
-                //TODO THIS is too quick... how to slow it down??
-                currentDirectionDeg += rotationSpeed * Time.deltaTime;
+                //apply acceleration to velocity
+                currentVelocityPerSecond += acceleration * Time.deltaTime;
+                currentVelocityPerSecond = Mathf.Clamp(currentVelocityPerSecond, -maxSpeed, maxSpeed);
+                velocityPerSecond = HandleTurningAndSlide(velocityPerSecond);
+                velocityPerSecond *= currentVelocityPerSecond;
+
+                //Drift vector
+                //driftVector *= currentVelocityPerSecond;
+
             }
-            if(turningRight)
+            else if (!isAccelerating && currentVelocityPerSecond > 0.5f) // if not holding GO & still rolling
             {
-                currentDirectionDeg -= rotationSpeed * Time.deltaTime;
-            }
-    
-            if (currentVelocityPerSecond <= 0)
-            {
-                deceleration *= 3;
-                deceleration = Mathf.Clamp(deceleration, 0.0f, 10.0f);
+                // Apply Drag
+                velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
+                currentVelocityPerSecond = Mathf.Lerp(currentVelocityPerSecond, 0, Time.deltaTime * dragForce); // lerp between current speed and drag force overtime
+                currentVelocityPerSecond = Mathf.Clamp(currentVelocityPerSecond, 0, 100);
+                velocityPerSecond = HandleTurningAndSlide(velocityPerSecond);
+                velocityPerSecond *= currentVelocityPerSecond;
             }
             else
             {
-                deceleration = 6;
+                // Reset values
+                currentVelocityPerSecond = 0;
+                velocityPerSecond = Vector3.zero;
+                //driftVector = Vector3.zero;
             }
-
-            velocityPerSecond += decelrationForce;
-        }
-        else // account for decceleration force whilst NOT deccelerating
-        {
-            velocityPerSecond += decelrationForce * Time.deltaTime;
-        }
 
         #endregion
 
-        //TODO FLOW FIELD ACTIVATION HERE
-        // Invoke flow Field Forces onto velocity
-        velocityPerSecond += ffD.FlowBoundry();
+            #region Deceleration 
+            if (isDeccelerating)
+            {
+                //TODO OMG THIS WORKS. what the fuck
+                currentVelocityPerSecond -= 4 * Time.deltaTime;
+                
+                // assign deceleration force
+                decelrationForce = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
+                decelrationForce *= -deceleration;
+
+                Debug.DrawLine(transform.position, transform.position + decelrationForce, Color.cyan);
+
+                //allow for turning whilst reversing
+                if (turningLeft)
+                {
+                    // allow turning no matter what
+                    //TODO THIS is too quick... how to slow it down??
+                    currentDirectionDeg += rotationSpeed * Time.deltaTime;
+                }
+                if(turningRight)
+                {
+                    currentDirectionDeg -= rotationSpeed * Time.deltaTime;
+                }
+    
+                if (currentVelocityPerSecond <= 0)
+                {
+                    deceleration *= 3;
+                    deceleration = Mathf.Clamp(deceleration, 0.0f, 10.0f);
+                }
+                else
+                {
+                    deceleration = 6;
+                }
+
+                velocityPerSecond += decelrationForce;
+            }
+            else // account for decceleration force whilst NOT deccelerating
+            {
+                velocityPerSecond += decelrationForce * Time.deltaTime;
+            }
+
+        #endregion
+
+            //TODO FLOW FIELD ACTIVATION HERE
+            // Invoke flow Field Forces onto velocity
+            velocityPerSecond += ffD.FlowBoundry();
 
             // add rotation & accel vectors to move
             transform.position += velocityPerSecond * Time.deltaTime;
+        }
 
     }
 
