@@ -63,6 +63,7 @@ public class GameManager : MonoBehaviour
         }
 
         //Track who is in the lead?
+        lapCount.text = "Lap: " + player.lap.ToString();
 
     }
 
