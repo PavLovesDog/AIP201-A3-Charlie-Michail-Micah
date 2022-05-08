@@ -17,6 +17,9 @@ public class GameManager : MonoBehaviour
     public List<NPC_AI> NPCScripts = new List<NPC_AI>();
     public vehicleController player;
 
+    [Header("AUDIO CONTROLLER")]
+    public audioManager audioManager;
+
     void Start()
     {
         isGameRunning = false;
@@ -29,6 +32,9 @@ public class GameManager : MonoBehaviour
         {
             NPCScripts.Add(npc.GetComponent<NPC_AI>());
         }
+
+        // not have music start immediately
+        audioManager.StopRaceMusic();
     }
 
     void Update()
@@ -63,5 +69,8 @@ public class GameManager : MonoBehaviour
         isGameRunning = true;
 
         startButton.SetActive(false);
+
+        // start music at 1/2 volume
+        audioManager.PlayRaceMusic(0.1f);
     }
 }

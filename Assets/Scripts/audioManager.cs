@@ -33,8 +33,9 @@ public class audioManager : MonoBehaviour
     //for long skids, or horn presses ?
 
     //function to start the race music, callable from other scripts
-    public void PlayRaceMusic()
+    public void PlayRaceMusic(float volume)
     {
+        raceMusic.volume = volume;
         raceMusic.Play();
     }
 

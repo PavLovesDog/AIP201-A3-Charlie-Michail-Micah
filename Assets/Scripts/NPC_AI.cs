@@ -127,44 +127,6 @@ public class NPC_AI : MonoBehaviour
             }
         }
 
-        #region old destination change handling
-        // Catch for if they've spent too much time trying to get to a destination
-        //if(trackedTooLong) 
-        //{
-        //    if (trackingIndex > 0)
-        //        trackingIndex--;
-        //    trackingTimer = 0.0f; // reset time
-        //}
-        //
-        //if (goneTooFar)
-        //{
-        //    tooFarTimer += Time.deltaTime; // increase timer
-        //    if (tooFarTimer > 2.0f)
-        //    {
-        //        if(trackingIndex > 0)
-        //            trackingIndex--;
-        //
-        //        tooFarTimer = -2.0f; // reset!
-        //        trackingTimer = 0.0f; // reset timer
-        //    }
-        //}
-        //else if (onToNextLocation)
-        //{
-        //    if (repeatTrack)
-        //    {
-        //        trackingIndex = destinations.Count - 1; // Reset tracking index so cars repeat track ?
-        //        trackingTimer = 0.0f; // reset timer
-        //    }
-        //    else
-        //    {
-        //        trackingIndex--;
-        //        trackingTimer = 0.0f; // reset timer
-        //    }
-        //    onToNextLocation = false;
-        //}
-
-        #endregion
-
         //trackingTimer += Time.deltaTime;
         Destination = destinations[trackingIndex]; // constantly update destination to top position i nlist
 
@@ -188,34 +150,6 @@ public class NPC_AI : MonoBehaviour
                  
                     //Set desired direction object.
                     directionObject.transform.position = Destination.transform.position;
-
-                    
-                        /*Intercept*/
-                        //TODO THIS can be used for making the tracking points moving side to side, to keep car tracking interesting.??
-                        {
-                                ////Get reference to player & track its trajectory(speed & location)/interception time
-                                //player_ai playerScript = Destination.GetComponent<player_ai>();
-                                //Vector3 speed_difference = playerScript.move_per_frame - velocity_per_second;
-                                //float interceptTime = distanceToDestination / speed_difference.magnitude;
-                                //Vector3 predicted_position = Destination.position + playerScript.move_per_frame * interceptTime;
-                                //
-                                //// create vector to add to current
-                                //Vector3 desired_position = predicted_position - transform.position;
-                                //desired_position.Normalize();
-                                //desired_position *= speed;
-                                //
-                                //// Compute Steering Vector For This Frame (steering vector to add to direction to smoothly turn actor)
-                                //Vector3 steering_vector_ps = (desired_position - velocity_per_second).normalized * steering_speed;
-                                //Vector3 steering_vector_pf = steering_vector_ps * Time.deltaTime;
-                                //
-                                //// Determine New Velocity Direction with Added Steering (add steering vector to current vector)
-                                //Vector3 steering_and_current = velocity_per_second + steering_vector_pf;
-                                //steering_and_current.Normalize(); // get direction for added vector
-                                //
-                                //// Determine New Velocity With Speed
-                                //velocity_per_second = steering_and_current * speed;
-                        }
-                    
 
                     // check Game Manager
                     if(gmScript.isGameRunning)
@@ -254,6 +188,7 @@ public class NPC_AI : MonoBehaviour
 
     void TrackLap()
     {
+        // if actor is touching the object
         bool lapCountReset = transform.position.x > (this.lapCountReset.transform.position.x - this.lapCountReset.transform.localScale.x) &&
                              transform.position.x < this.lapCountReset.transform.localScale.x + this.lapCountReset.transform.position.x &&
                              transform.position.y > (this.lapCountReset.transform.position.y - this.lapCountReset.transform.localScale.y) &&
@@ -265,10 +200,11 @@ public class NPC_AI : MonoBehaviour
                                  transform.position.y < startFinishLine.transform.localScale.y + startFinishLine.transform.position.y;
 
 
+        // if actor has reached certain part of map
         if (lapCountReset)
             readyToCrossFinishLine = true;
 
-
+        // lap count!
         if (isTouchingLapLine && readyToCrossFinishLine)
         {
             readyToCrossFinishLine = false; // bool so it only happens once
@@ -290,13 +226,12 @@ public class NPC_AI : MonoBehaviour
 
         // Set up Destinations to follow
         GameObject[] D = GameObject.FindGameObjectsWithTag("Destination");
-
         foreach(GameObject ds in D)
         {
             destinations.Add(ds.transform);
         }
 
         trackingIndex = destinations.Count - 1; // set index amount
-        Destination = destinations[trackingIndex];
+        Destination = destinations[trackingIndex]; // set first destination
     }
 }

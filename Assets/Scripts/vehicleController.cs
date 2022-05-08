@@ -27,7 +27,7 @@ public class vehicleController : MonoBehaviour
     Vector3 slideForceRight = Vector3.zero;
     public float driftAmount = 1.0f;
     public float driftAngle = 90.0f;
-    public float driftTime = 0.0f;
+    //public float driftTime = 0.0f;
     public float timeLeftTurning = 0.0f;
     public float timeRightTurning = 0.0f;
     float minSpeedForTurn = 0.0f;
@@ -194,96 +194,99 @@ public class vehicleController : MonoBehaviour
     }
 
     Vector3 HandleTurningAndSlide(Vector3 velocityPerSecond)
+    {
+        // LEFT TURNING =====================================================================================
+        #region Left Turning Physics
+        if (turningLeft)
         {
-            // LEFT TURNING =====================================================================================
-            if (turningLeft)
+            timeRightTurning -= Time.deltaTime * 2.0f; // Reset so right turn does NOT interfere
+
+            // Left Turn Slide
+            timeLeftTurning += Time.deltaTime * 2.0f;
+            timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 1.5f); // clamp it
+            slideForceLeft *= (timeLeftTurning * 5) * minSpeedForTurn;
+            velocityPerSecond -= slideForceLeft * Time.deltaTime * driftAmount; // add slide force to current force
+
+            Debug.DrawLine(transform.position, transform.position + slideForceLeft, Color.magenta); // DUBUG
+
+            if (isDeccelerating)
             {
-                timeRightTurning -= Time.deltaTime * 2.0f; // Reset so right turn does NOT interfere
-
-                // Left Turn Slide
-                timeLeftTurning += Time.deltaTime * 2.0f;
-                timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 1.5f); // clamp it
-                slideForceLeft *= (timeLeftTurning * 5) * minSpeedForTurn;
-                velocityPerSecond -= slideForceLeft * Time.deltaTime * driftAmount; // add slide force to current force
-
-                Debug.DrawLine(transform.position, transform.position + slideForceLeft, Color.magenta); // DUBUG
-
-                if (isDeccelerating)
-                {
-                    // allow turning no matter what
-                    currentDirectionDeg += rotationSpeed * Time.deltaTime;
-                }
-                else // apply rotation speed clamp
-                {
-                    currentDirectionDeg += rotationSpeed * Time.deltaTime * minSpeedForTurn;
-                }
-
-                // drift left
-                if (pressedDrift && currentVelocityPerSecond > 0.0f)
-                {
-                    // immediately increase slide vector force, to simulate kickout & slide
-                    timeLeftTurning += Time.deltaTime * 5; // slideing timer
-                    timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 2.0f); // clamp ity
-                    slideForceLeft *= (timeLeftTurning * 8) * minSpeedForTurn;
-                    Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
+                // allow turning no matter what
+                currentDirectionDeg += rotationSpeed * Time.deltaTime;
             }
-
-
-            }
-            else if (!turningLeft && !turningRight && timeLeftTurning > 0.0f)
+            else // apply rotation speed clamp
             {
-                // Left turn slide - Release
-                timeLeftTurning -= Time.deltaTime * 2; // multiply speed of release by 2
-                timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 1.5f);
-                slideForceLeft *= (timeLeftTurning * 5) * minSpeedForTurn;
-                velocityPerSecond -= slideForceLeft * Time.deltaTime * driftAmount;
+                currentDirectionDeg += rotationSpeed * Time.deltaTime * minSpeedForTurn;
             }
 
-            // RIGHT TURNING ======================================================================================
-            if (turningRight)
+            // drift left
+            if (pressedDrift && currentVelocityPerSecond > 0.0f)
             {
-                timeLeftTurning -= Time.deltaTime * 2.0f;
-                timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 2.0f);
-
-                timeRightTurning += Time.deltaTime * 2; // slideing timer
-                timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 1.5f); // clamp it
-                slideForceRight *= (timeRightTurning * 5) * minSpeedForTurn; // Clamp slide force to velocity (Cant slide while NO velocity)
-                Debug.DrawLine(transform.position, transform.position + slideForceRight, Color.magenta);
-
-                velocityPerSecond -= slideForceRight * Time.deltaTime * driftAmount; // add slide force to current force
-
-                if (isDeccelerating)
-                {
-                    // allow turning no matter what
-                    currentDirectionDeg -= rotationSpeed * Time.deltaTime;
-                }
-                else
-                {
-                    //apply speed turning clamp
-                    currentDirectionDeg -= rotationSpeed * Time.deltaTime * minSpeedForTurn;
-                }
-
-                // drift right
-                if (pressedDrift && currentVelocityPerSecond > 0.0f)
-                {
-                    // immediately increse slide vector force, to simulate kickout & slide
-                    timeRightTurning += Time.deltaTime * 5;
-                    timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 2.0f); // clamp it
-                    slideForceRight *= (timeRightTurning * 8) * minSpeedForTurn;
+                // immediately increase slide vector force, to simulate kickout & slide
+                timeLeftTurning += Time.deltaTime * 5; // slideing timer
+                timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 2.0f); // clamp ity
+                slideForceLeft *= (timeLeftTurning * 8) * minSpeedForTurn;
+                Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
             }
 
-            }
-            else if (!turningLeft && !turningRight && timeRightTurning > 0.0f)
-            {
-                // Right slide release
-                timeRightTurning -= Time.deltaTime * 2.0f;
-                timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 1.5f);
-                slideForceRight *= (timeRightTurning * 5) * minSpeedForTurn;
-                velocityPerSecond -= slideForceRight * Time.deltaTime * driftAmount;
-                Debug.DrawLine(transform.position, transform.position + slideForceRight, Color.magenta);
-            }
 
-            return velocityPerSecond;
         }
+        else if (!turningLeft && !turningRight && timeLeftTurning > 0.0f)
+        {
+            // Left turn slide - Release
+            timeLeftTurning -= Time.deltaTime * 2; // multiply speed of release by 2
+            timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 1.5f);
+            slideForceLeft *= (timeLeftTurning * 5) * minSpeedForTurn;
+            velocityPerSecond -= slideForceLeft * Time.deltaTime * driftAmount;
+        }
+        #endregion
 
+        // RIGHT TURNING ======================================================================================
+        #region Right Turning Physics
+        if (turningRight)
+        {
+            timeLeftTurning -= Time.deltaTime * 2.0f;
+            timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 2.0f);
+
+            timeRightTurning += Time.deltaTime * 2; // slideing timer
+            timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 1.5f); // clamp it
+            slideForceRight *= (timeRightTurning * 5) * minSpeedForTurn; // Clamp slide force to velocity (Cant slide while NO velocity)
+            Debug.DrawLine(transform.position, transform.position + slideForceRight, Color.magenta);
+
+            velocityPerSecond -= slideForceRight * Time.deltaTime * driftAmount; // add slide force to current force
+
+            if (isDeccelerating)
+            {
+                // allow turning no matter what
+                currentDirectionDeg -= rotationSpeed * Time.deltaTime;
+            }
+            else
+            {
+                //apply speed turning clamp
+                currentDirectionDeg -= rotationSpeed * Time.deltaTime * minSpeedForTurn;
+            }
+
+            // drift right
+            if (pressedDrift && currentVelocityPerSecond > 0.0f)
+            {
+                // immediately increse slide vector force, to simulate kickout & slide
+                timeRightTurning += Time.deltaTime * 5;
+                timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 2.0f); // clamp it
+                slideForceRight *= (timeRightTurning * 8) * minSpeedForTurn;
+            }
+
+        }
+        else if (!turningLeft && !turningRight && timeRightTurning > 0.0f)
+        {
+            // Right slide release
+            timeRightTurning -= Time.deltaTime * 2.0f;
+            timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 1.5f);
+            slideForceRight *= (timeRightTurning * 5) * minSpeedForTurn;
+            velocityPerSecond -= slideForceRight * Time.deltaTime * driftAmount;
+            Debug.DrawLine(transform.position, transform.position + slideForceRight, Color.magenta);
+        }
+        #endregion
+
+        return velocityPerSecond;
+    } 
 }
