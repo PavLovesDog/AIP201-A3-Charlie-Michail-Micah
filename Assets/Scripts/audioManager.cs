@@ -4,15 +4,9 @@ using UnityEngine;
 
 public class audioManager : MonoBehaviour
 {
-    // References for each individual sound here, callable from other scripts
-    /*  --Example--
-    public AudioClip skidSound; // an audio clip is good for short sounds
-    public AudioSource raceMusic; // an audio source would better play long tracks such as overworld music
-    */
-
     //Audio sources
-    public AudioSource audioSource; // all sound will come from this object, for ease
-    public AudioSource raceMusic; // over world music
+    public AudioSource audioSource;
+    public AudioSource raceMusic;
     public AudioSource drivingSource;
     public AudioSource accelerationSource;
     public AudioSource driftSource;
@@ -26,6 +20,14 @@ public class audioManager : MonoBehaviour
     public AudioClip honkSound1;
     public AudioClip honkSound2;
 
+    private void Update()
+    {
+        //HONK!
+        if(Input.GetKeyDown(KeyCode.E))
+        {
+            PlayAudio(skidSource, honkSound1, 0.5f);
+        }
+    }
 
 
     // this function is to play a single audio clip, callable from another script
@@ -45,9 +47,6 @@ public class audioManager : MonoBehaviour
             source.Play();  // this plays the sound
         }
     }
-
-    //Maybe another function for sustained sound?
-    //for long skids, or horn presses ?
 
     //function to start the race music, callable from other scripts
     public void PlayRaceMusic(float volume)

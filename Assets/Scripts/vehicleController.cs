@@ -27,7 +27,6 @@ public class vehicleController : MonoBehaviour
     Vector3 slideForceRight = Vector3.zero;
     public float driftAmount = 1.0f;
     public float driftAngle = 90.0f;
-    //public float driftTime = 0.0f;
     public float timeLeftTurning = 0.0f;
     public float timeRightTurning = 0.0f;
     float minSpeedForTurn = 0.0f;
@@ -37,6 +36,7 @@ public class vehicleController : MonoBehaviour
     public bool isDeccelerating;
     public bool turningLeft;
     public bool turningRight;
+    public bool accelerateSoundGate;
     bool pressedDrift;
 
     [Header("TRACK REFERENCES")]
@@ -51,15 +51,14 @@ public class vehicleController : MonoBehaviour
     private void Start()
     {
         readyToCrossFinishLine = false;
+        accelerateSoundGate = true;
     }
 
     void Update()
     {
-
         TrackLap();
 
         // Track facing direction for vectors
-        //driftVector = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f, Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad) * 0.35f);
         velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
         slideForceLeft = new Vector3(Mathf.Cos((currentDirectionDeg + driftAngle) * Mathf.Deg2Rad) * 0.5f, Mathf.Sin((currentDirectionDeg + driftAngle) * Mathf.Deg2Rad) * 0.5f);
         slideForceRight = new Vector3(Mathf.Cos((currentDirectionDeg - driftAngle) * Mathf.Deg2Rad) * 0.5f, Mathf.Sin((currentDirectionDeg - driftAngle) * Mathf.Deg2Rad) * 0.5f);
@@ -78,12 +77,9 @@ public class vehicleController : MonoBehaviour
         isAccelerating = Input.GetKey(KeyCode.W);
         isDeccelerating = Input.GetKey(KeyCode.S);
 
-
         // Attach turning rotation to speed, if going too slow, no turn
         minSpeedForTurn = currentVelocityPerSecond / 8;
         minSpeedForTurn = Mathf.Clamp01(minSpeedForTurn); // clamp betwee 0 & 1
-
-        //TODO CHANGE move rotation based on physics, a force in the direction we wish to turn
 
         // attach rotation to vector for steering
         Vector3 Rotation = new Vector3(0.0f, 0.0f, currentDirectionDeg - 90.0f);
@@ -94,8 +90,14 @@ public class vehicleController : MonoBehaviour
             #region Acceleration
             if (isAccelerating)
             {
-                //play sounds
-                audioM.PlayAudio(audioM.accelerationSource, audioM.accelerationSound, 0.5f);
+                if(accelerateSoundGate)
+                {
+                    //play sounds
+                    audioM.PlayAudio(audioM.accelerationSource, audioM.accelerationSound, 0.15f);
+                    accelerateSoundGate = false;
+                }
+
+                audioM.PlayAudio(audioM.drivingSource, audioM.drivingSound, 0.25f);
 
                 //apply acceleration to velocity
                 currentVelocityPerSecond += acceleration * Time.deltaTime;
@@ -103,14 +105,13 @@ public class vehicleController : MonoBehaviour
                 velocityPerSecond = HandleTurningAndSlide(velocityPerSecond);
                 velocityPerSecond *= currentVelocityPerSecond;
 
-                //Drift vector
-                //driftVector *= currentVelocityPerSecond;
-
             }
             else if (!isAccelerating && currentVelocityPerSecond > 0.5f) // if not holding GO & still rolling
             {
+                accelerateSoundGate = true;
+
                 //play engine sounds
-               audioM.PlayAudio(audioM.drivingSource, audioM.drivingSound, 0.5f);
+               audioM.PlayAudio(audioM.drivingSource, audioM.drivingSound, 0.25f);
 
                 // Apply Drag
                 velocityPerSecond = new Vector3(Mathf.Cos(currentDirectionDeg * Mathf.Deg2Rad), Mathf.Sin(currentDirectionDeg * Mathf.Deg2Rad));
@@ -172,7 +173,6 @@ public class vehicleController : MonoBehaviour
 
         #endregion
 
-            //TODO FLOW FIELD ACTIVATION HERE
             // Invoke flow Field Forces onto velocity
             velocityPerSecond += ffD.FlowBoundry();
 
@@ -182,6 +182,9 @@ public class vehicleController : MonoBehaviour
 
     }
 
+    // A function to track the lap of player.
+    // checks if they have hit a certain point then increments
+    // their lap count when they cross the starting line
     void TrackLap()
     {
         bool lapCountReset = transform.position.x > (this.lapCountReset.transform.position.x - this.lapCountReset.transform.localScale.x) &&
@@ -215,6 +218,7 @@ public class vehicleController : MonoBehaviour
         {
             timeRightTurning -= Time.deltaTime * 2.0f; // Reset so right turn does NOT interfere
 
+
             // Left Turn Slide
             timeLeftTurning += Time.deltaTime * 2.0f;
             timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 1.5f); // clamp it
@@ -233,6 +237,10 @@ public class vehicleController : MonoBehaviour
                 currentDirectionDeg += rotationSpeed * Time.deltaTime * minSpeedForTurn;
             }
 
+            //play skid sounds
+            if(timeLeftTurning > 1.0f)
+            audioM.PlayAudio(audioM.skidSource, audioM.skidSound1, 0.35f);
+
             // drift left
             if (pressedDrift && currentVelocityPerSecond > 0.0f)
             {
@@ -241,6 +249,11 @@ public class vehicleController : MonoBehaviour
                 timeLeftTurning = Mathf.Clamp(timeLeftTurning, 0.0f, 2.0f); // clamp ity
                 slideForceLeft *= (timeLeftTurning * 8) * minSpeedForTurn;
                 Debug.DrawLine(transform.position, transform.position + driftVector, Color.red); // draw drift force
+
+                //play skid sound
+                audioM.PlayAudio(audioM.driftSource, audioM.skidSound2, 0.25f);
+
+                //display Drift logo
                 gm.Drift.SetActive(true);
             }
             else
@@ -292,6 +305,11 @@ public class vehicleController : MonoBehaviour
                 timeRightTurning += Time.deltaTime * 5;
                 timeRightTurning = Mathf.Clamp(timeRightTurning, 0.0f, 2.0f); // clamp it
                 slideForceRight *= (timeRightTurning * 8) * minSpeedForTurn;
+
+                //play skid sound
+                audioM.PlayAudio(audioM.driftSource, audioM.skidSound2, 0.25f);
+
+                //display drift logo
                 gm.Drift.SetActive(true);
             }
             else

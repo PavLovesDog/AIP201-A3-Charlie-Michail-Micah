@@ -48,6 +48,12 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        //debug help
+        if(Input.GetKeyDown(KeyCode.M))
+        {
+            audioManager.StopRaceMusic();
+        }
+
         // Track who won!
         //Player check
         if (player.lap == lapsToFinish)
@@ -56,11 +62,12 @@ public class GameManager : MonoBehaviour
 
             print(player.ToString() + " is the winner!!");
 
+            // truncate name and display winner
             string message;
             message = player.ToString();
             message = message.Replace("(vehicleController)", "");
 
-            Winner.text = message + " is the winner!!";
+            Winner.text = message + "is the winner!!";
             WinnerPanel.SetActive(true);
         }
 
@@ -76,14 +83,14 @@ public class GameManager : MonoBehaviour
                 //Show winner on Panel
                 string message;
                 message = NPCScripts[i].ToString();
-                message = message.Replace("NPC_AI", "");
+                message = message.Replace("(NPC_AI)", "");
 
-                Winner.text = NPCScripts[i].ToString() + " is the winner!!";
+                Winner.text = message + "is the winner!!";
                 WinnerPanel.SetActive(true);
             }
         }
 
-        //Track who is in the lead?
+        // update lap count text!
         lapCount.text = "Lap: " + player.lap.ToString();
     }
 
